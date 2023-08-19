@@ -14,15 +14,15 @@ struct DictIndex {
     format: i32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Term {
-    expression: String,
-    reading: String,
+    pub expression: String,
+    pub reading: String,
     definition_tags: String,
     rules: String,
     score: u64,
-    glossary: Vec<String>,
+    pub glossary: Vec<String>,
     sequence: u64,
     term_tags: String,
 }

@@ -12,13 +12,13 @@ pub struct DeinflectionRule {
     pub rules_out: Vec<String>,
 }
 
-type DeinflectionList = HashMap<String, Vec<DeinflectionRule>>;
+pub type DeinflectionList = HashMap<String, Vec<DeinflectionRule>>;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct Deinflection {
-    term: String,
-    rules: Vec<String>,
-    reasons: Vec<String>,
+    pub term: String,
+    pub rules: Vec<String>,
+    pub reasons: Vec<String>,
 }
 fn deinflect_inner(deinf_list: &DeinflectionList, source: Deinflection) -> Vec<Deinflection> {
     deinf_list
