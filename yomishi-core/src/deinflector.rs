@@ -14,7 +14,7 @@ pub struct DeinflectionRule {
 
 type DeinflectionList = HashMap<String, Vec<DeinflectionRule>>;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct Deinflection {
     term: String,
     rules: Vec<String>,
@@ -50,15 +50,14 @@ fn deinflect_inner(deinf_list: &DeinflectionList, source: Deinflection) -> Vec<D
                             Deinflection {
                                 term: format!(
                                     "{}{}",
-                                    term[..term
+                                    &term[..term
                                         .char_indices()
                                         .nth(
                                             term.char_indices().count()
                                                 - kana_in.char_indices().count()
                                         )
                                         .unwrap()
-                                        .0]
-                                        .to_string(),
+                                        .0],
                                     kana_out
                                 ),
                                 rules: rules_out.clone(),
@@ -86,4 +85,30 @@ pub fn deinflect(deinf_list: &DeinflectionList, source: &str) -> Vec<Deinflectio
             ..Default::default()
         },
     )
+}
+
+pub fn deinflect_all<'a>(
+    deinf_list: &DeinflectionList,
+    source: &'a str,
+) -> Vec<(&'a str, Deinflection)> {
+    let mut result = vec![];
+
+    for i in 0..(source.char_indices().count()) {
+        let slice = &source[..source
+            .char_indices()
+            .nth(source.char_indices().count() - i)
+            .map(|(a, _)| a)
+            .unwrap_or(source.len())];
+        result.extend(deinflect(deinf_list, slice).into_iter().map(|e| (slice, e)));
+    }
+
+    result.sort_by(|a, b| {
+        b.1.term
+            .char_indices()
+            .count()
+            .cmp(&a.1.term.char_indices().count())
+    });
+    result.dedup_by(|a, b| a.1.eq(&b.1));
+
+    result
 }

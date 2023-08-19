@@ -7,7 +7,10 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::{deinflector::deinflect, dict_parser::parse_dict};
+    use crate::{
+        deinflector::{deinflect, deinflect_all},
+        dict_parser::parse_dict,
+    };
 
     #[test]
     fn test_yomishi() {
@@ -22,5 +25,11 @@ mod tests {
 
         let di = deinflect(&deinf_list, "食べませんでした");
         println!("{:?}", di);
+
+        let di_all = deinflect_all(&deinf_list, "食べませんでした");
+
+        for a in di_all {
+            println!("{:?}", a)
+        }
     }
 }
