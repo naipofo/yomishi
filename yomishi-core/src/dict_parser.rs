@@ -23,7 +23,7 @@ pub struct Term {
     rules: String,
     score: u64,
     pub glossary: Vec<String>,
-    sequence: u64,
+    pub sequence: u64,
     term_tags: String,
 }
 

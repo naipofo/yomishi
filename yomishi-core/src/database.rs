@@ -1,8 +1,11 @@
-use crate::dict_parser::Term;
+use crate::{deinflector::DeinflectionResult, dict_parser::Term};
 
 pub mod slow_inmem;
 
 pub trait Database {
     fn load(&mut self, title: String, terms: Vec<Term>) -> Option<()>;
-    fn search(&self, text: &str) -> Vec<Term>;
+    fn search<'a>(&'a self, text: &'a str) -> Vec<SearchResult<'a>>;
 }
+
+#[derive(Debug)]
+pub struct SearchResult<'a>(pub Term, pub DeinflectionResult<'a>);

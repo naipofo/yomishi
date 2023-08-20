@@ -2,6 +2,7 @@ use std::path::Path;
 
 use crate::{
     database::{slow_inmem::SlowInMemeoryDatabase, Database},
+    deinflector::Deinflector,
     dict_parser::import_from_path,
 };
 
@@ -16,7 +17,7 @@ fn main() {
     println!("imported \"{title}\" with {} terms", dict.len());
 
     let mut db = SlowInMemeoryDatabase::new(
-        serde_json::from_str(include_str!("../../local_test_files/deinflect.json")).unwrap(),
+        Deinflector::new_from_str(include_str!("../../local_test_files/deinflect.json")).unwrap(),
     );
 
     db.load(title, dict);
