@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package yomishi.scan;
+
+service Scan {
+  rpc ScanString(ScanStringRequest) returns (ScanStringReply) {}
+}
+
+message ScanStringRequest { string text = 1; }
+
+message ScanStringReply { repeated ScanResult results = 1; }
+
+message ScanResult {
+  string expression = 1;
+  string reading = 2;
+  repeated string deflection_rules = 3;
+  repeated string glossary = 4;
+}
