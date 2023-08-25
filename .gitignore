@@ -1,2 +1,4 @@
 /target
 /local_test_files
+/node_modules
+/out

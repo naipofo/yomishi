@@ -1,0 +1,12 @@
+{
+  "name": "yomishi",
+  "version": "1.0.0",
+  "description": "yomichan JS files",
+  "private": true,
+  "dependencies": {
+    "esbuild": "^0.19.2",
+    "esbuild-svelte": "^0.7.4",
+    "svelte-preprocess": "^5.0.4",
+    "typescript": "^5.2.2"
+  }
+}
