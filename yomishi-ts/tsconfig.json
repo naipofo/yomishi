@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "outDir": "../out",
+        "rootDir": "..",
+        "paths": {
+            "@yomishi-proto/*": ["../out/ts-protos/*"]
+        },
+        "strict": true,
+        "strictNullChecks": true
+    }
+}
