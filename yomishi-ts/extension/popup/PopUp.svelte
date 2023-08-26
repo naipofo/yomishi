@@ -1,33 +1,30 @@
 <script lang="ts">
-    import { ScanStringRequest } from "@yomishi-proto/scan_pb";
-    import { Scan } from "@yomishi-proto/scan_connect";
-    import { createPromiseClient } from "@bufbuild/connect";
-    import { createGrpcWebTransport } from "@bufbuild/connect-web";
+    import { ScanStringReply } from "@yomishi-proto/scan_pb";
 
-    const working = "working";
-    $: emoji = working == "working" ? "🎉" : "💔";
-
-    const text = "食べさせない";
-    const req = ScanStringRequest.fromJson({ text });
-
-    const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
-    const client = createPromiseClient(Scan, transport);
-
-    const data = client.scanString(req).then((e) => {
-        console.log(e);
-        return e;
-    });
+    let data: ScanStringReply | null = null;
+    function messageHandler(e: MessageEvent<ScanStringReply>) {
+        data = e.data;
+    }
 </script>
 
-<div>
-    <h1>Yomishi is {working}! {emoji}</h1>
-    {#await data then d}
-        <code>{d.toJsonString()}</code>
-    {/await}
-</div>
+<svelte:window on:message={messageHandler} />
+{#if data}
+    {#each data.results as result}
+        <div>
+            <h4>{result.expression}</h4>
+            {#each result.glossary as def}
+                <p>{def}</p>
+            {/each}
+        </div>
+    {/each}
+{/if}
 
 <style>
-    h1 {
-        text-decoration: underline;
+    div:not(:last-child) {
+        border-bottom: 1px solid black;
+        margin-bottom: 10px;
+    }
+    :global(body) {
+        background: white;
     }
 </style>
