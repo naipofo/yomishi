@@ -6,6 +6,7 @@
             "@yomishi-proto/*": ["../out/ts-protos/*"]
         },
         "strict": true,
-        "strictNullChecks": true
+        "strictNullChecks": true,
+        "lib": ["es2015"]
     }
 }
