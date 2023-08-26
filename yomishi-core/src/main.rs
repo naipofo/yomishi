@@ -32,7 +32,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let scan_service = ScanService { db: db.clone() };
 
     Server::builder()
-        .add_service(ScanServer::new(scan_service))
+        .accept_http1(true)
+        .add_service(tonic_web::enable(ScanServer::new(scan_service)))
         .serve(addr)
         .await?;
 
