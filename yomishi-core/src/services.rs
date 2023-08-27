@@ -1,6 +1,7 @@
 use crate::{
-    database::{slow_inmem::SlowInMemeoryDatabase, Database},
-    protos::yomishi::scan::{self, ScanResult, ScanStringReply, ScanStringRequest},
+    database::{slow_inmem::SlowInMemeoryDatabase, Database, SearchResult},
+    japanese::ruby::try_from_reading,
+    protos::yomishi::scan::{self, RubySegment, ScanResult, ScanStringReply, ScanStringRequest},
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -23,13 +24,25 @@ impl scan::scan_server::Scan for ScanService {
                 .await
                 .search(&request.get_ref().text)
                 .into_iter()
-                .map(|e| ScanResult {
-                    expression: e.0.expression,
-                    reading: e.0.reading,
-                    inflection_rules: e.1.reasons.iter().map(|e| e.to_string()).collect(),
-                    glossary: e.0.glossary,
-                })
+                .map(search_to_proto)
                 .collect(),
         }))
+    }
+}
+
+fn search_to_proto(e: SearchResult) -> ScanResult {
+    ScanResult {
+        ruby: try_from_reading(e.0.expression, e.0.reading)
+            .into_iter()
+            .map(|e| match e {
+                crate::japanese::ruby::Segment::Text(text) => RubySegment { text, ruby: None },
+                crate::japanese::ruby::Segment::Ruby(text, r) => RubySegment {
+                    text,
+                    ruby: Some(r),
+                },
+            })
+            .collect(),
+        inflection_rules: e.1.reasons.iter().map(|e| e.to_string()).collect(),
+        glossary: e.0.glossary,
     }
 }

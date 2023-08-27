@@ -11,8 +11,12 @@ message ScanStringRequest { string text = 1; }
 message ScanStringReply { repeated ScanResult results = 1; }
 
 message ScanResult {
-  string expression = 1;
-  string reading = 2;
-  repeated string inflection_rules = 3;
-  repeated string glossary = 4;
+  repeated RubySegment ruby = 1;
+  repeated string inflection_rules = 2;
+  repeated string glossary = 3;
+}
+
+message RubySegment {
+  string text = 1;
+  optional string ruby = 2;
 }

@@ -12,6 +12,7 @@ use tonic::transport::Server;
 mod database;
 mod deinflector;
 mod dict_parser;
+mod japanese;
 mod protos;
 mod services;
 

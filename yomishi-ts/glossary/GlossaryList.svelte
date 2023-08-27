@@ -1,5 +1,6 @@
 <script lang="ts">
     import { ScanResult } from "@yomishi-proto/scan_pb";
+    import RubyRender from "./RubyRender.svelte";
 
     export let glossary: ScanResult[];
 </script>
@@ -7,10 +8,7 @@
 {#each glossary as element}
     <article>
         <header>
-            {element.expression}
-            {#if element.expression != element.reading}
-                <span class="reading">{element.reading}</span>
-            {/if}
+            <RubyRender string={element.ruby} />
             <span>
                 {#each element.inflectionRules as rule}
                     <span class="rule">{rule}</span>
@@ -33,7 +31,6 @@
     header {
         font-size: 2rem;
     }
-    .reading,
     .rule {
         font-size: 1rem;
     }
