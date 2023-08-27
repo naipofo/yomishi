@@ -13,6 +13,6 @@ message ScanStringReply { repeated ScanResult results = 1; }
 message ScanResult {
   string expression = 1;
   string reading = 2;
-  repeated string deflection_rules = 3;
+  repeated string inflection_rules = 3;
   repeated string glossary = 4;
 }

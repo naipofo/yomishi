@@ -26,7 +26,7 @@ impl scan::scan_server::Scan for ScanService {
                 .map(|e| ScanResult {
                     expression: e.0.expression,
                     reading: e.0.reading,
-                    deflection_rules: e.1.reasons.iter().map(|e| e.to_string()).collect(),
+                    inflection_rules: e.1.reasons.iter().map(|e| e.to_string()).collect(),
                     glossary: e.0.glossary,
                 })
                 .collect(),
