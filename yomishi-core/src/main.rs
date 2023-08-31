@@ -1,7 +1,7 @@
 use crate::{
     database::{slow_inmem::SlowInMemeoryDatabase, Database},
     deinflector::Deinflector,
-    dict_parser::import_from_path,
+    dict::import_from_directory,
     protos::yomishi::scan::scan_server::ScanServer,
     services::ScanService,
 };
@@ -11,7 +11,7 @@ use tonic::transport::Server;
 
 mod database;
 mod deinflector;
-mod dict_parser;
+mod dict;
 mod japanese;
 mod protos;
 mod services;
@@ -24,8 +24,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Deinflector::new_from_str(include_str!("../../local_test_files/deinflect.json")).unwrap(),
     );
 
-    let (title, dict) = import_from_path(Path::new("../local_test_files/index.json")).unwrap();
-    db.load(title, dict);
+    let dicts = import_from_directory(Path::new("../local_test_files/dic")).unwrap();
+    for (title, dict) in dicts {
+        db.load(title, dict);
+    }
 
     let db = Arc::new(Mutex::new(db));
     let addr = "[::1]:50051".parse()?;

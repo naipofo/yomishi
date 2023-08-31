@@ -1,4 +1,4 @@
-use crate::{deinflector::Deinflector, dict_parser::Term};
+use crate::{deinflector::Deinflector, dict::parser::Term};
 
 use super::{Database, SearchResult};
 

@@ -1,4 +1,4 @@
-use crate::{deinflector::DeinflectionResult, dict_parser::Term};
+use crate::{deinflector::DeinflectionResult, dict::parser::Term};
 
 pub mod slow_inmem;
 

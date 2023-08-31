@@ -1,18 +1,7 @@
-use std::{
-    collections::VecDeque,
-    fs::{read_dir, read_to_string},
-    path::Path,
-};
+use std::{collections::VecDeque, io::Read};
 
-use regex::Regex;
 use serde::Deserialize;
 use serde_json::Value;
-
-#[derive(Debug, Deserialize)]
-struct DictIndex {
-    title: String,
-    format: i32,
-}
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -27,8 +16,8 @@ pub struct Term {
     term_tags: String,
 }
 
-fn parse_bank(format: i32, bank: &str) -> Vec<Term> {
-    serde_json::from_str::<Vec<_>>(bank)
+pub fn parse_bank(format: i32, bank: impl Read) -> Vec<Term> {
+    serde_json::from_reader::<_, Vec<_>>(bank)
         .unwrap()
         .into_iter()
         .map(if format == 1 {
@@ -81,24 +70,4 @@ fn fill_reading(t: Term) -> Term {
             ..t
         }
     }
-}
-
-pub fn import_from_path(index_path: &Path) -> std::io::Result<(String, Vec<Term>)> {
-    let index = read_to_string(index_path)?;
-    let DictIndex { title, format } = serde_json::from_str(&index).unwrap();
-
-    let files = read_dir(index_path.parent().unwrap())?;
-    let re = Regex::new(r"term\_bank\_(\d+)\.json").unwrap();
-
-    let terms = files
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|e| re.is_match(&e.file_name().to_string_lossy()))
-        .map(|f| Ok(parse_bank(format, &read_to_string(f.path())?)))
-        .collect::<Result<Vec<_>, std::io::Error>>()?
-        .into_iter()
-        .flatten()
-        .collect();
-
-    Ok((title, terms))
 }
