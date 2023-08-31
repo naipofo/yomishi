@@ -32,7 +32,7 @@ async function scanFromEvent(e: MouseEvent) {
         const data = await client.scanString(req);
         if (data.results.length > 0) {
             // TODO: detect vertical text
-            updateFrame(data, e.clientX, rect.y + rect.height + window.scrollY);
+            updateFrame(data, rect);
         }
     }
 }
