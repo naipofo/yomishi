@@ -1,5 +1,6 @@
 use crate::{
     database::{slow_inmem::SlowInMemeoryDatabase, Database, SearchResult},
+    dict::parser::GlossaryEntry,
     japanese::ruby::try_from_reading,
     protos::yomishi::scan::{self, RubySegment, ScanResult, ScanStringReply, ScanStringRequest},
 };
@@ -43,6 +44,14 @@ fn search_to_proto(e: SearchResult) -> ScanResult {
             })
             .collect(),
         inflection_rules: e.1.reasons.iter().map(|e| e.to_string()).collect(),
-        glossary: e.0.glossary,
+        glossary: e
+            .0
+            .glossary
+            .into_iter()
+            .map(|e| match e {
+                GlossaryEntry::Text(t) => t,
+                GlossaryEntry::Detailed(e) => format!("{e:?}"),
+            })
+            .collect(),
     }
 }

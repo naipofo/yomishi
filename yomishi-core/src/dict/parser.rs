@@ -1,19 +1,38 @@
+pub mod structured;
+
 use std::{collections::VecDeque, io::Read};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Debug, Deserialize, Clone)]
+use self::structured::StructuredContent;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Term {
     pub expression: String,
     pub reading: String,
-    definition_tags: String,
+    definition_tags: Option<String>,
     rules: String,
-    score: u64,
-    pub glossary: Vec<String>,
-    pub sequence: u64,
+    score: i64,
+    pub glossary: Vec<GlossaryEntry>,
+    pub sequence: i64,
     term_tags: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum GlossaryEntry {
+    Text(String),
+    Detailed(GlossaryDetailed),
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(tag = "type", rename_all = "kebab-case")]
+pub enum GlossaryDetailed {
+    Text { text: String },
+    Image { path: String },
+    StructuredContent { content: StructuredContent },
 }
 
 pub fn parse_bank(format: i32, bank: impl Read) -> Vec<Term> {
