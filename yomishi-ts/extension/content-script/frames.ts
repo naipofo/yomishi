@@ -17,5 +17,10 @@ export function updateFrame(data: ScanStringReply, x: number, y: number) {
     }
     frame.style.left = x + "px";
     frame.style.top = y + "px";
+    frame.style.display = "block";
     frame.contentWindow?.postMessage(data, "*");
 }
+
+document.addEventListener("keydown", e => {
+    if (e.key == "Escape" && frame) frame.style.display = "none";
+});
