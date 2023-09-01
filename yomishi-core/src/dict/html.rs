@@ -1,6 +1,6 @@
 use super::parser::{
     structured::{ItemData, StructuredContent, StructuredItem},
-    GlossaryDetailed, GlossaryEntry,
+    term::{GlossaryDetailed, GlossaryEntry},
 };
 use quick_xml::{
     events::{BytesEnd, BytesStart, BytesText, Event},
