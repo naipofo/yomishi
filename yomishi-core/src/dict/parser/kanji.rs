@@ -9,7 +9,6 @@ use serde_json::Value;
 use super::FromBank;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct Kanji {
     pub character: String,
     pub onyomi: String, // TODO: Space separated
@@ -25,8 +24,7 @@ impl FromBank for Kanji {
     }
 }
 
-fn convert_v1(v: VecDeque<Value>) -> serde_json::Result<Kanji> {
-    let mut v = v;
+fn convert_v1(mut v: VecDeque<Value>) -> serde_json::Result<Kanji> {
     Ok(Kanji {
         character: serde_json::from_value(v.pop_front().unwrap())?,
         onyomi: serde_json::from_value(v.pop_front().unwrap())?,
@@ -40,8 +38,7 @@ fn convert_v1(v: VecDeque<Value>) -> serde_json::Result<Kanji> {
     })
 }
 
-fn convert_v3(v: VecDeque<Value>) -> serde_json::Result<Kanji> {
-    let mut v = v;
+fn convert_v3(mut v: VecDeque<Value>) -> serde_json::Result<Kanji> {
     Ok(Kanji {
         character: serde_json::from_value(v.pop_front().unwrap())?,
         onyomi: serde_json::from_value(v.pop_front().unwrap())?,

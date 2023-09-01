@@ -1,6 +1,9 @@
 pub mod kanji;
+pub mod kanji_meta;
 pub mod structured;
+pub mod tag;
 pub mod term;
+pub mod term_meta;
 
 use std::{collections::VecDeque, io::Read};
 

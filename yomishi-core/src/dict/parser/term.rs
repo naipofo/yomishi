@@ -6,7 +6,6 @@ use serde_json::Value;
 use super::{structured::StructuredContent, FromBank};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct Term {
     pub expression: String,
     pub reading: String,
@@ -39,8 +38,7 @@ impl FromBank for Term {
     }
 }
 
-fn convert_v3(v: VecDeque<Value>) -> serde_json::Result<Term> {
-    let mut v = v;
+fn convert_v3(mut v: VecDeque<Value>) -> serde_json::Result<Term> {
     Ok(Term {
         expression: serde_json::from_value(v.pop_front().unwrap())?,
         reading: serde_json::from_value(v.pop_front().unwrap())?,
@@ -53,8 +51,7 @@ fn convert_v3(v: VecDeque<Value>) -> serde_json::Result<Term> {
     })
 }
 
-fn convert_v1(v: VecDeque<Value>) -> serde_json::Result<Term> {
-    let mut v = v;
+fn convert_v1(mut v: VecDeque<Value>) -> serde_json::Result<Term> {
     Ok(Term {
         expression: serde_json::from_value(v.pop_front().unwrap())?,
         reading: serde_json::from_value(v.pop_front().unwrap())?,
