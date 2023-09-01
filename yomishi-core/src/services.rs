@@ -1,6 +1,6 @@
 use crate::{
     database::{slow_inmem::SlowInMemeoryDatabase, Database, SearchResult},
-    dict::parser::GlossaryEntry,
+    dict::html::render_glossary,
     japanese::ruby::try_from_reading,
     protos::yomishi::scan::{self, RubySegment, ScanResult, ScanStringReply, ScanStringRequest},
 };
@@ -48,10 +48,7 @@ fn search_to_proto(e: SearchResult) -> ScanResult {
             .0
             .glossary
             .into_iter()
-            .map(|e| match e {
-                GlossaryEntry::Text(t) => t,
-                GlossaryEntry::Detailed(e) => format!("{e:?}"),
-            })
+            .map(|e| render_glossary(e).unwrap().0)
             .collect(),
     }
 }

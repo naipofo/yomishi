@@ -29,16 +29,31 @@ pub enum StructuredItem {
 pub enum ItemVariant {
     Image {
         path: String,
+        width: Option<i32>,
+        height: Option<i32>,
+        title: Option<String>,
+        sizeUnits: Option<SizeUnits>,
     },
     Link {
         href: String,
         content: Option<StructuredContent>,
     },
+    TableElement {
+        colSpan: Option<i64>,
+        rowSpan: Option<i64>,
+    },
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum SizeUnits {
+    Px,
+    Em,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ItemData {
-    content: Option<StructuredContent>,
-    style: Option<HashMap<String, Value>>,
-    data: Option<HashMap<String, String>>,
+    pub content: Option<StructuredContent>,
+    pub style: Option<HashMap<String, Value>>,
+    pub data: Option<HashMap<String, String>>,
 }

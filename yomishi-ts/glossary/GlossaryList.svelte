@@ -17,7 +17,7 @@
         </header>
         <ol>
             {#each element.glossary as def}
-                <li>{def}</li>
+                <li>{@html def}</li>
             {/each}
         </ol>
     </article>

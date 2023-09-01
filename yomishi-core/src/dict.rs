@@ -8,6 +8,7 @@ use serde::Deserialize;
 
 use self::parser::{parse_bank, Term};
 
+pub mod html;
 pub mod parser;
 
 #[derive(Debug, Deserialize)]
