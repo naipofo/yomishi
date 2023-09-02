@@ -22,7 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .unwrap();
 
-    let dicts = import_from_directory(Path::new("../local_test_files/dic")).unwrap();
+    let dicts = import_from_directory(Path::new("../local_test_files/dic"), |index| {
+        !db.dict_exists(index).unwrap()
+    })
+    .unwrap();
     for (index, terms, _, _, _, _) in dicts {
         println!("loading {} entr", terms.len());
         db.load(&index, terms).unwrap();

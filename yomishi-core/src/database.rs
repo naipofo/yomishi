@@ -44,13 +44,16 @@ impl Database {
         Ok(Self { conn, deinflector })
     }
 
-    pub fn load(&mut self, index: &DictIndex, terms: Vec<Term>) -> rusqlite::Result<()> {
-        if self
+    pub fn dict_exists(&self, index: &DictIndex) -> rusqlite::Result<bool> {
+        Ok(self
             .conn
             .prepare("SELECT EXISTS(SELECT 1 FROM dictionaries WHERE title = ? AND revision = ?)")?
             .query_row(index_to_touple(&index), |r| r.get::<_, i64>(0))?
-            == 1
-        {
+            == 1)
+    }
+
+    pub fn load(&mut self, index: &DictIndex, terms: Vec<Term>) -> rusqlite::Result<()> {
+        if self.dict_exists(index)? {
             return Ok(());
         }
 
@@ -145,5 +148,5 @@ impl Database {
 }
 
 fn index_to_touple(i: &DictIndex) -> (&str, &str) {
-    (&i.revision, &i.title)
+    (&i.title, &i.revision)
 }

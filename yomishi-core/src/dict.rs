@@ -33,17 +33,25 @@ pub type LoadedDict = (
     Vec<Tag>,
 );
 
-pub fn import_from_directory(dir_path: &Path) -> std::io::Result<Vec<LoadedDict>> {
+pub fn import_from_directory<F: FnMut(&DictIndex) -> bool>(
+    dir_path: &Path,
+    mut should_import: F,
+) -> std::io::Result<Vec<LoadedDict>> {
     read_dir(dir_path)?
         .into_iter()
-        .map(|e| {
-            let mut zip = zip::ZipArchive::new(File::open(e?.path())?)?;
-            import_zip(&mut zip)
+        .filter_map(|e| {
+            let mut zip = zip::ZipArchive::new(File::open(e.unwrap().path()).unwrap()).unwrap();
+            let index = get_index(&mut zip).unwrap();
+            if should_import(&index) {
+                Some(import_zip(&mut zip, index))
+            } else {
+                None
+            }
         })
         .collect()
 }
 
-pub fn import_zip(zip: &mut ZipArchive<File>) -> std::io::Result<LoadedDict> {
+pub fn get_index(zip: &mut ZipArchive<File>) -> std::io::Result<DictIndex> {
     let mut ob: HashMap<String, Value> =
         serde_json::from_reader(zip.by_name("index.json")?).unwrap();
     let index = DictIndex {
@@ -55,7 +63,10 @@ pub fn import_zip(zip: &mut ZipArchive<File>) -> std::io::Result<LoadedDict> {
             .as_i64()
             .unwrap(),
     };
+    Ok(index)
+}
 
+pub fn import_zip(zip: &mut ZipArchive<File>, index: DictIndex) -> std::io::Result<LoadedDict> {
     let names = zip.file_names().map(|e| e.to_string()).collect::<Vec<_>>();
     let format = index.format.clone();
 
