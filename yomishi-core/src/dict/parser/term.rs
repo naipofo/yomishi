@@ -9,12 +9,12 @@ use super::{structured::StructuredContent, FromBank};
 pub struct Term {
     pub expression: String,
     pub reading: String,
-    definition_tags: Option<String>,
-    rules: String,
-    score: i64,
+    pub definition_tags: Option<String>,
+    pub rules: String,
+    pub score: i64,
     pub glossary: Vec<GlossaryEntry>,
     pub sequence: i64,
-    term_tags: String,
+    pub term_tags: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

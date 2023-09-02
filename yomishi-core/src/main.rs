@@ -1,9 +1,6 @@
 use crate::{
-    database::{slow_inmem::SlowInMemeoryDatabase, Database},
-    deinflector::Deinflector,
-    dict::import_from_directory,
-    protos::yomishi::scan::scan_server::ScanServer,
-    services::ScanService,
+    database::Database, deinflector::Deinflector, dict::import_from_directory,
+    protos::yomishi::scan::scan_server::ScanServer, services::ScanService,
 };
 use std::{path::Path, sync::Arc};
 use tokio::sync::Mutex;
@@ -20,14 +17,17 @@ mod services;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Hello, yomishi!");
 
-    let mut db = SlowInMemeoryDatabase::new(
+    let mut db = Database::new(
         Deinflector::new_from_str(include_str!("../../local_test_files/deinflect.json")).unwrap(),
-    );
+    )
+    .unwrap();
 
     let dicts = import_from_directory(Path::new("../local_test_files/dic")).unwrap();
-    for (title, dict) in dicts {
-        db.load(title, dict);
+    for (index, dict) in dicts {
+        println!("loading {} entr", dict.len());
+        db.load(&index, dict).unwrap();
     }
+    println!("loaded all!");
 
     let db = Arc::new(Mutex::new(db));
     let addr = "[::1]:50051".parse()?;

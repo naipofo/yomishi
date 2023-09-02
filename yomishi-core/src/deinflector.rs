@@ -17,8 +17,10 @@ pub struct DeinflectionRule {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct DeinflectionResult<'a> {
-    pub term: String,
+pub struct DeinflectionResult<'a>(pub String, pub DeinflectionMeta<'a>);
+
+#[derive(Debug, Default, Clone)]
+pub struct DeinflectionMeta<'a> {
     pub source: &'a str,
     pub rules: Vec<&'a str>,
     pub reasons: Vec<&'a str>,
@@ -35,15 +37,17 @@ impl Deinflector {
         let mut deinflections: Vec<DeinflectionResult<'_>> = vec![];
 
         deinflections.extend(StepSearch::new_from_str(source).flat_map(|source| {
-            self.deinflect_single(DeinflectionResult {
-                term: source.to_string(),
-                source,
-                ..Default::default()
-            })
+            self.deinflect_single(DeinflectionResult(
+                source.to_string(),
+                DeinflectionMeta {
+                    source,
+                    ..Default::default()
+                },
+            ))
         }));
 
-        deinflections.sort_by(|a, b| a.term.len().cmp(&b.term.len()));
-        deinflections.dedup_by(|a, b| a.term == b.term);
+        deinflections.sort_by(|a, b| a.0.len().cmp(&b.0.len()));
+        deinflections.dedup_by(|a, b| a.0 == b.0);
 
         deinflections
     }
@@ -59,12 +63,14 @@ impl Deinflector {
                          rules_in,
                          rules_out,
                      }| {
-                        let DeinflectionResult {
+                        let DeinflectionResult(
                             term,
-                            source: _,
-                            rules,
-                            reasons,
-                        } = &text;
+                            DeinflectionMeta {
+                                source: _,
+                                rules,
+                                reasons,
+                            },
+                        ) = &text;
 
                         if rules.len() != 0 && &rules != &rules_in
                             || !term.ends_with(kana_in)
@@ -87,15 +93,17 @@ impl Deinflector {
                                     .0],
                                 kana_out
                             );
-                            self.deinflect_single(DeinflectionResult {
-                                term: deinf_term,
-                                source: text.source,
-                                rules: rules_out.iter().map(|s| s.as_str()).collect(),
-                                reasons: vec![reason.as_str()]
-                                    .into_iter()
-                                    .chain(reasons.clone())
-                                    .collect(),
-                            })
+                            self.deinflect_single(DeinflectionResult(
+                                deinf_term,
+                                DeinflectionMeta {
+                                    source: text.1.source,
+                                    rules: rules_out.iter().map(|s| s.as_str()).collect(),
+                                    reasons: vec![reason.as_str()]
+                                        .into_iter()
+                                        .chain(reasons.clone())
+                                        .collect(),
+                                },
+                            ))
                         }
                     },
                 )
