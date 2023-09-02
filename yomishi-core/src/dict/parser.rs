@@ -9,7 +9,7 @@ use std::{collections::VecDeque, io::Read};
 
 use serde_json::Value;
 
-pub fn parse_bank<T: FromBank>(format: i32, bank: impl Read) -> Vec<T> {
+pub fn parse_bank<T: FromBank>(format: i64, bank: impl Read) -> Vec<T> {
     serde_json::from_reader::<_, Vec<_>>(bank)
         .unwrap()
         .into_iter()
@@ -19,5 +19,5 @@ pub fn parse_bank<T: FromBank>(format: i32, bank: impl Read) -> Vec<T> {
 }
 
 pub trait FromBank: Sized {
-    fn parse(r: VecDeque<Value>, format: i32) -> serde_json::Result<Self>;
+    fn parse(r: VecDeque<Value>, format: i64) -> serde_json::Result<Self>;
 }

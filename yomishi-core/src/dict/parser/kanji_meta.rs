@@ -19,7 +19,7 @@ pub struct MetaValue {
 }
 
 impl FromBank for KanjiMeta {
-    fn parse(r: VecDeque<Value>, _: i32) -> serde_json::Result<Self> {
+    fn parse(r: VecDeque<Value>, _: i64) -> serde_json::Result<Self> {
         convert(r)
     }
 }

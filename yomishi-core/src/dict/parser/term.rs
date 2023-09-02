@@ -33,7 +33,7 @@ pub enum GlossaryDetailed {
 }
 
 impl FromBank for Term {
-    fn parse(r: VecDeque<Value>, format: i32) -> serde_json::Result<Self> {
+    fn parse(r: VecDeque<Value>, format: i64) -> serde_json::Result<Self> {
         (if format == 1 { convert_v1 } else { convert_v3 })(r).map(fill_reading)
     }
 }

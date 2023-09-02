@@ -15,7 +15,7 @@ pub struct Tag {
 }
 
 impl FromBank for Tag {
-    fn parse(r: VecDeque<Value>, _: i32) -> serde_json::Result<Self> {
+    fn parse(r: VecDeque<Value>, _: i64) -> serde_json::Result<Self> {
         convert(r)
     }
 }
