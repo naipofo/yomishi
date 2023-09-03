@@ -26,9 +26,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         !db.dict_exists(index).unwrap()
     })
     .unwrap();
-    for (index, terms, _, _, _, _) in dicts {
-        println!("loading {} entr", terms.len());
-        db.load(&index, terms).unwrap();
+    for d in dicts {
+        db.load(d).unwrap();
     }
     println!("loaded all!");
 

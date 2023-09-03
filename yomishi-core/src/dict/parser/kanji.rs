@@ -13,9 +13,9 @@ pub struct Kanji {
     pub character: String,
     pub onyomi: String, // TODO: Space separated
     pub kunyomi: String,
-    kanji_tags: String,
+    pub kanji_tags: String,
     pub meaning: Vec<String>,
-    various: HashMap<String, String>,
+    pub various: HashMap<String, String>,
 }
 
 impl FromBank for Kanji {

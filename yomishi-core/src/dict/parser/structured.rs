@@ -36,7 +36,6 @@ pub enum ItemVariant {
     },
     Link {
         href: String,
-        content: Option<StructuredContent>,
     },
     TableElement {
         colSpan: Option<i64>,

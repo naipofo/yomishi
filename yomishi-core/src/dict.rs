@@ -87,7 +87,7 @@ pub fn import_zip(zip: &mut ZipArchive<File>, index: DictIndex) -> std::io::Resu
         t!(r"term\_meta\_bank"),
         t!(r"kanji\_bank"),
         t!(r"kanji\_meta\_bank"),
-        t!(r"tag\_meta\_bank"),
+        t!(r"tag\_bank"),
     ))
 }
 

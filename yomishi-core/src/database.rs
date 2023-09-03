@@ -1,10 +1,26 @@
+mod dictionaries;
+mod kanjis;
+mod kanjis_meta;
+mod tags;
+mod terms;
+mod terms_meta;
+
 use std::path::Path;
 
 use rusqlite::{params, Connection};
 
 use crate::{
     deinflector::{DeinflectionMeta, DeinflectionResult, Deinflector},
-    dict::{parser::term::Term, DictIndex},
+    dict::{parser::term::Term, DictIndex, LoadedDict},
+};
+
+use self::{
+    dictionaries::{dict_exists, insert_dictionary},
+    kanjis::insert_kanjis_bulk,
+    kanjis_meta::insert_kanjis_meta_bulk,
+    tags::insert_tags_bulk,
+    terms::insert_terms_bulk,
+    terms_meta::insert_terms_meta_bulk,
 };
 
 #[derive(Debug)]
@@ -19,86 +35,38 @@ impl Database {
     pub fn new(deinflector: Deinflector) -> rusqlite::Result<Self> {
         let conn = Connection::open(Path::new("./db.sqlite3"))?;
 
-        conn.execute_batch(
-            "CREATE TABLE IF NOT EXISTS dictionaries(
-                id INTEGER PRIMARY KEY,
-                title TEXT NOT NULL,
-                revision TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS terms(
-                id INTEGER PRIMARY KEY,
-                expression TEXT NOT NULL,
-                reading TEXT NOT NULL,
-                definition_tags TEXT,
-                rules TEXT NOT NULL,
-                score INTEGER NOT NULL,
-                glossary TEXT NOT NULL,
-                sequence INTEGER NOT NULL,
-                term_tags TEXT NOT NULL,
-                dictionary INTEGER NOT NULL,
-                FOREIGN KEY(dictionary) REFERENCES dictionaries(id)
-            );
-            PRAGMA journal_mode = WAL;",
-        )?;
+        conn.execute_batch(concat!(
+            "PRAGMA journal_mode = WAL;",
+            include_str!("database/create.sql"),
+            include_str!("database/index.sql")
+        ))?;
 
         Ok(Self { conn, deinflector })
     }
 
     pub fn dict_exists(&self, index: &DictIndex) -> rusqlite::Result<bool> {
-        Ok(self
-            .conn
-            .prepare("SELECT EXISTS(SELECT 1 FROM dictionaries WHERE title = ? AND revision = ?)")?
-            .query_row(index_to_touple(&index), |r| r.get::<_, i64>(0))?
-            == 1)
+        dict_exists(&self.conn, index)
     }
 
-    pub fn load(&mut self, index: &DictIndex, terms: Vec<Term>) -> rusqlite::Result<()> {
-        if self.dict_exists(index)? {
+    pub fn load(&mut self, dictionary: LoadedDict) -> rusqlite::Result<()> {
+        let (index, term, term_meta, kanji, kanji_meta, tag) = dictionary;
+
+        if dict_exists(&self.conn, &index)? {
             return Ok(());
         }
 
         let tx = self.conn.transaction()?;
-        tx.execute(
-            "INSERT INTO dictionaries(
-                title,
-                revision
-            ) VALUES (?, ?)",
-            index_to_touple(&index),
-        )?;
-        let d_id = tx.last_insert_rowid();
 
-        let mut prep = tx.prepare_cached(
-            "INSERT INTO terms(
-                expression,
-                reading,
-                definition_tags,
-                rules,
-                score,
-                glossary,
-                sequence,
-                term_tags,
-                dictionary
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        )?;
+        let dictionary_id = insert_dictionary(&tx, &index)?;
 
-        terms
-            .iter()
-            .map(|t| {
-                prep.insert(params![
-                    t.expression,
-                    t.reading,
-                    t.definition_tags,
-                    t.rules,
-                    t.score,
-                    serde_json::to_string(&t.glossary).unwrap(),
-                    t.sequence,
-                    t.term_tags,
-                    d_id
-                ])
-                .map(|_| ())
-            })
-            .collect::<rusqlite::Result<_>>()?;
-        prep.discard();
+        insert_terms_bulk(&tx, term, dictionary_id)?;
+        insert_terms_meta_bulk(&tx, term_meta, dictionary_id)?;
+
+        insert_kanjis_bulk(&tx, kanji, dictionary_id)?;
+        insert_kanjis_meta_bulk(&tx, kanji_meta, dictionary_id)?;
+
+        insert_tags_bulk(&tx, tag, dictionary_id)?;
+
         tx.commit()
     }
 
@@ -145,8 +113,4 @@ impl Database {
             })
             .collect()
     }
-}
-
-fn index_to_touple(i: &DictIndex) -> (&str, &str) {
-    (&i.title, &i.revision)
 }
