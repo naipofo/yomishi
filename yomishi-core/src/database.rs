@@ -5,13 +5,16 @@ mod tags;
 mod terms;
 mod terms_meta;
 
-use std::path::Path;
+use std::{collections::BTreeMap, path::Path, vec};
 
 use rusqlite::{params, Connection};
 
 use crate::{
     deinflector::{DeinflectionMeta, DeinflectionResult, Deinflector},
-    dict::{parser::term::Term, DictIndex, LoadedDict},
+    dict::{
+        parser::{tag::Tag, term::Term, term_meta::TermMeta},
+        DictIndex, LoadedDict,
+    },
 };
 
 use self::{
@@ -23,12 +26,15 @@ use self::{
     terms_meta::insert_terms_meta_bulk,
 };
 
-#[derive(Debug)]
-pub struct SearchResult<'a>(pub Term, pub DeinflectionMeta<'a>);
-
 pub struct Database {
-    conn: Connection,
+    pub conn: Connection,
     deinflector: Deinflector,
+}
+
+pub struct SearchResult<'a> {
+    pub deinflection: DeinflectionMeta<'a>,
+    pub glossares: Vec<(Term, Vec<TermMeta>, Vec<Tag>)>,
+    pub tags: Vec<Tag>,
 }
 
 impl Database {
@@ -70,10 +76,7 @@ impl Database {
         tx.commit()
     }
 
-    pub fn search<'a>(
-        &'a mut self,
-        text: &'a str,
-    ) -> rusqlite::Result<Vec<(DeinflectionMeta, Vec<Term>)>> {
+    pub fn search<'a>(&'a mut self, text: &'a str) -> rusqlite::Result<Vec<SearchResult>> {
         let deinf = self.deinflector.deinflect(text);
         let mut s_sql = self.conn.prepare(
             "SELECT
@@ -90,27 +93,76 @@ impl Database {
             WHERE expression = ?",
         )?;
 
-        deinf
+        // TODO: make this not peak at 12 levels of indent
+
+        Ok(deinf
             .into_iter()
             .map(|DeinflectionResult(term, meta)| {
-                Ok((
-                    meta,
-                    s_sql
-                        .query_map(params![&term], |e| -> Result<Term, rusqlite::Error> {
-                            Ok(Term {
+                struct LookupResult(Term, Vec<TermMeta>, Vec<Tag>, Vec<Tag>);
+
+                #[derive(PartialEq, Eq, PartialOrd, Ord)]
+                struct DedupKey(String, String);
+
+                fn group_pairs(v: Vec<LookupResult>) -> BTreeMap<DedupKey, Vec<LookupResult>> {
+                    v.into_iter().fold(BTreeMap::new(), |mut acc, el| {
+                        acc.entry(DedupKey(
+                            el.0.expression.to_string(),
+                            el.0.reading.to_string(),
+                        ))
+                        .or_default()
+                        .push(el);
+                        acc
+                    })
+                }
+
+                let terms_r: Vec<LookupResult> = s_sql
+                    .query_map(
+                        params![&term],
+                        |e| -> Result<LookupResult, rusqlite::Error> {
+                            let term = Term {
                                 expression: e.get(0)?,
                                 reading: e.get(1)?,
-                                definition_tags: e.get(2)?,
+                                definition_tags: serde_json::from_str(&e.get::<_, String>(2)?)
+                                    .unwrap(),
                                 rules: e.get(3)?,
                                 score: e.get(4)?,
                                 glossary: serde_json::from_str(&e.get::<_, String>(5)?).unwrap(),
                                 sequence: e.get(6)?,
                                 term_tags: serde_json::from_str(&e.get::<_, String>(7)?).unwrap(),
-                            })
-                        })?
-                        .collect::<rusqlite::Result<_>>()?,
-                ))
+                            };
+
+                            let dict_id: i64 = e.get(8)?;
+
+                            let tags = self.get_tag_list(&term.definition_tags, &dict_id)?;
+                            let term_tags = self.get_tag_list(&term.term_tags, &dict_id)?;
+                            Ok(LookupResult(term, Vec::<TermMeta>::new(), tags, term_tags))
+                        },
+                    )?
+                    .collect::<rusqlite::Result<_>>()?;
+
+                let terms_grouped = group_pairs(terms_r);
+
+                Ok(terms_grouped
+                    .into_iter()
+                    .map(|(_, e)| {
+                        let mut all_tags = vec![];
+                        SearchResult {
+                            deinflection: meta.clone(),
+                            glossares: e
+                                .into_iter()
+                                .map(|LookupResult(term, meta, tag, global)| {
+                                    all_tags.extend(global.into_iter());
+                                    (term, meta, tag)
+                                })
+                                .collect::<Vec<_>>(),
+                            tags: all_tags,
+                        }
+                    })
+                    .collect::<Vec<_>>())
             })
-            .collect()
+            .collect::<rusqlite::Result<Vec<_>>>()?
+            .into_iter()
+            .flatten()
+            .collect())
     }
 }

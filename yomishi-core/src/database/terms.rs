@@ -27,7 +27,7 @@ pub fn insert_terms_bulk(
             prep.insert(params![
                 t.expression,
                 t.reading,
-                t.definition_tags,
+                serde_json::to_string(&t.definition_tags).unwrap(),
                 t.rules,
                 t.score,
                 serde_json::to_string(&t.glossary).unwrap(),

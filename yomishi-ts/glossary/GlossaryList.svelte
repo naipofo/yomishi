@@ -1,24 +1,34 @@
 <script lang="ts">
     import { ScanResult } from "@yomishi-proto/scan_pb";
     import RubyRender from "./RubyRender.svelte";
+    import TagList from "./TagList.svelte";
 
-    export let glossary: ScanResult[];
+    export let results: ScanResult[];
+    console.log(results);
 </script>
 
-{#each glossary as element}
+{#each results as result}
     <article>
         <header>
-            <RubyRender string={element.ruby} />
+            <RubyRender string={result.ruby} />
             <span>
-                {#each element.inflectionRules as rule}
+                {#each result.inflectionRules as rule}
                     <span class="rule">{rule}</span>
                 {/each}
             </span>
+            <TagList tags={result.tags} />
         </header>
         <ol>
-            {#each element.glossary as def}
-                <li>{@html def}</li>
-            {/each}
+            <li>
+                {#each result.glossary as glossary}
+                    <TagList tags={glossary.tags} />
+                    <ul>
+                        {#each glossary.definition as def}
+                            <li class="rendered">{@html def}</li>
+                        {/each}
+                    </ul>
+                {/each}
+            </li>
         </ol>
     </article>
 {/each}
@@ -41,7 +51,7 @@
         list-style: none;
         padding-left: 0;
     }
-    li {
+    li.rendered {
         white-space: pre-line;
     }
 </style>

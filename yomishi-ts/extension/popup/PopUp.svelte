@@ -10,7 +10,8 @@
 
 <svelte:window on:message={messageHandler} />
 {#if data}
-    <GlossaryList glossary={data.results} />
+    <GlossaryList results={data.results.reverse()} />
+    <!-- TODO: correct order from server -->
 {:else}
     <h2>Loading...</h2>
 {/if}

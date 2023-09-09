@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, vec};
+use std::collections::VecDeque;
 
 use super::{structured::StructuredContent, FromBank};
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use serde_with::{formats::SpaceSeparator, serde_as, DeserializeAs, StringWithSep
 pub struct Term {
     pub expression: String,
     pub reading: String,
-    pub definition_tags: Option<String>,
+    pub definition_tags: Vec<String>,
     pub rules: String,
     pub score: i64,
     pub glossary: Vec<GlossaryEntry>,
@@ -43,7 +43,9 @@ fn convert_v3(mut v: VecDeque<Value>) -> serde_json::Result<Term> {
     Ok(Term {
         expression: serde_json::from_value(v.pop_front().unwrap())?,
         reading: serde_json::from_value(v.pop_front().unwrap())?,
-        definition_tags: serde_json::from_value(v.pop_front().unwrap())?,
+        definition_tags: StringWithSeparator::<SpaceSeparator, String>::deserialize_as(
+            v.pop_front().unwrap(),
+        )?,
         rules: serde_json::from_value(v.pop_front().unwrap())?,
         score: serde_json::from_value(v.pop_front().unwrap())?,
         glossary: serde_json::from_value(v.pop_front().unwrap())?,
