@@ -26,7 +26,7 @@ pub fn insert_kanjis_bulk(
                 t.character,
                 t.onyomi,
                 t.kunyomi,
-                t.kanji_tags,
+                serde_json::to_string(&t.kanji_tags).unwrap(),
                 serde_json::to_string(&t.meaning).unwrap(),
                 serde_json::to_string(&t.various).unwrap(),
                 dictionary_id

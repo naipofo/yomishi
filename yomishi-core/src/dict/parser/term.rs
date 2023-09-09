@@ -1,10 +1,11 @@
-use std::collections::VecDeque;
-
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use std::{collections::VecDeque, vec};
 
 use super::{structured::StructuredContent, FromBank};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use serde_with::{formats::SpaceSeparator, serde_as, DeserializeAs, StringWithSeparator};
 
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Term {
     pub expression: String,
@@ -14,7 +15,7 @@ pub struct Term {
     pub score: i64,
     pub glossary: Vec<GlossaryEntry>,
     pub sequence: i64,
-    pub term_tags: String,
+    pub term_tags: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -47,7 +48,9 @@ fn convert_v3(mut v: VecDeque<Value>) -> serde_json::Result<Term> {
         score: serde_json::from_value(v.pop_front().unwrap())?,
         glossary: serde_json::from_value(v.pop_front().unwrap())?,
         sequence: serde_json::from_value(v.pop_front().unwrap())?,
-        term_tags: serde_json::from_value(v.pop_front().unwrap())?,
+        term_tags: StringWithSeparator::<SpaceSeparator, String>::deserialize_as(
+            v.pop_front().unwrap(),
+        )?,
     })
 }
 
@@ -63,7 +66,7 @@ fn convert_v1(mut v: VecDeque<Value>) -> serde_json::Result<Term> {
             .map(serde_json::from_value)
             .collect::<Result<_, _>>()?,
         sequence: 0,
-        term_tags: "".to_string(),
+        term_tags: vec![],
     })
 }
 

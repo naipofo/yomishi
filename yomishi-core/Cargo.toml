@@ -13,6 +13,7 @@ regex = "1.9"
 rusqlite = { version = "0.29.0", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde_with = "3.3.0"
 tokio = { version = "1.29.1", features = ["full"] } # TODO: don't use full
 tonic = "0.9.2"
 tonic-web = "0.9.2"

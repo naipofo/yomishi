@@ -5,6 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use serde_with::{formats::SpaceSeparator, DeserializeAs, StringWithSeparator};
 
 use super::FromBank;
 
@@ -13,7 +14,7 @@ pub struct Kanji {
     pub character: String,
     pub onyomi: String, // TODO: Space separated
     pub kunyomi: String,
-    pub kanji_tags: String,
+    pub kanji_tags: Vec<String>,
     pub meaning: Vec<String>,
     pub various: HashMap<String, String>,
 }
@@ -29,7 +30,9 @@ fn convert_v1(mut v: VecDeque<Value>) -> serde_json::Result<Kanji> {
         character: serde_json::from_value(v.pop_front().unwrap())?,
         onyomi: serde_json::from_value(v.pop_front().unwrap())?,
         kunyomi: serde_json::from_value(v.pop_front().unwrap())?,
-        kanji_tags: serde_json::from_value(v.pop_front().unwrap())?,
+        kanji_tags: StringWithSeparator::<SpaceSeparator, String>::deserialize_as(
+            v.pop_front().unwrap(),
+        )?,
         meaning: vec![match v.pop_front() {
             Some(v) => serde_json::from_value(v)?,
             None => "".to_string(),

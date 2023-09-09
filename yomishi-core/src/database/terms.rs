@@ -32,7 +32,7 @@ pub fn insert_terms_bulk(
                 t.score,
                 serde_json::to_string(&t.glossary).unwrap(),
                 t.sequence,
-                t.term_tags,
+                serde_json::to_string(&t.term_tags).unwrap(),
                 dictionary_id
             ])
             .map(|_| ())

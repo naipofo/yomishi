@@ -96,7 +96,7 @@ impl Database {
                 Ok((
                     meta,
                     s_sql
-                        .query_map(params![&term], |e| {
+                        .query_map(params![&term], |e| -> Result<Term, rusqlite::Error> {
                             Ok(Term {
                                 expression: e.get(0)?,
                                 reading: e.get(1)?,
@@ -105,7 +105,7 @@ impl Database {
                                 score: e.get(4)?,
                                 glossary: serde_json::from_str(&e.get::<_, String>(5)?).unwrap(),
                                 sequence: e.get(6)?,
-                                term_tags: e.get(7)?,
+                                term_tags: serde_json::from_str(&e.get::<_, String>(7)?).unwrap(),
                             })
                         })?
                         .collect::<rusqlite::Result<_>>()?,
