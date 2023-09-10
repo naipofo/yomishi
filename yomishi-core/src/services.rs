@@ -1,12 +1,12 @@
 use crate::{
     database::{Database, SearchResult},
-    dict::html::render_glossary,
+    dict::{html::render_glossary, parser::term_meta::TermMetaEntry},
     japanese::ruby::try_from_reading,
     protos::yomishi::scan::{
-        self, Glossary, RubySegment, ScanResult, ScanStringReply, ScanStringRequest, Tag,
+        self, Frequency, Glossary, RubySegment, ScanResult, ScanStringReply, ScanStringRequest, Tag,
     },
 };
-use std::{collections::HashSet, sync::Arc, vec};
+use std::{collections::HashSet, sync::Arc};
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
@@ -39,6 +39,7 @@ fn search_to_proto(result: SearchResult) -> ScanResult {
         deinflection,
         glossares,
         tags,
+        meta,
     } = result;
 
     ScanResult {
@@ -62,23 +63,36 @@ fn search_to_proto(result: SearchResult) -> ScanResult {
             .into_iter()
             .map(tag_to_proto)
             .collect(),
-        frequency: vec![],
+        frequency: meta
+            .into_iter()
+            .filter_map(|(dict, e)| match e.entry {
+                TermMetaEntry::Frequency(s, n) => Some(Frequency {
+                    name: dict,
+                    value: match s {
+                        Some(s) => s,
+                        None => match n {
+                            Some(n) => n.to_string(),
+                            None => None?,
+                        },
+                    },
+                }),
+                TermMetaEntry::Pitches(_) => None, // TODO: Pitches
+            })
+            .collect(),
         glossary: glossares.into_iter().map(glossary_to_proto).collect(),
     }
 }
 
 fn glossary_to_proto(
-    g: (
+    (term, tags): (
         crate::dict::parser::term::Term,
-        Vec<crate::dict::parser::term_meta::TermMeta>,
         Vec<crate::dict::parser::tag::Tag>,
     ),
 ) -> Glossary {
     Glossary {
         dictionary: "".to_string(),
-        tags: g.2.into_iter().map(tag_to_proto).collect(),
-        definition: g
-            .0
+        tags: tags.into_iter().map(tag_to_proto).collect(),
+        definition: term
             .glossary
             .into_iter()
             .map(|e| render_glossary(e).unwrap().0)

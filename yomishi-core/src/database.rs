@@ -7,22 +7,19 @@ mod terms_meta;
 
 use std::{collections::BTreeMap, path::Path, vec};
 
-use rusqlite::{params, Connection};
+use rusqlite::Connection;
 
 use crate::{
     deinflector::{DeinflectionMeta, DeinflectionResult, Deinflector},
     dict::{
         parser::{tag::Tag, term::Term, term_meta::TermMeta},
-        DictIndex, LoadedDict,
+        LoadedDict,
     },
 };
 
 use self::{
-    dictionaries::{dict_exists, insert_dictionary},
-    kanjis::insert_kanjis_bulk,
-    kanjis_meta::insert_kanjis_meta_bulk,
-    tags::insert_tags_bulk,
-    terms::insert_terms_bulk,
+    dictionaries::insert_dictionary, kanjis::insert_kanjis_bulk,
+    kanjis_meta::insert_kanjis_meta_bulk, tags::insert_tags_bulk, terms::insert_terms_bulk,
     terms_meta::insert_terms_meta_bulk,
 };
 
@@ -33,8 +30,9 @@ pub struct Database {
 
 pub struct SearchResult<'a> {
     pub deinflection: DeinflectionMeta<'a>,
-    pub glossares: Vec<(Term, Vec<TermMeta>, Vec<Tag>)>,
+    pub glossares: Vec<(Term, Vec<Tag>)>,
     pub tags: Vec<Tag>,
+    pub meta: Vec<(String, TermMeta)>,
 }
 
 impl Database {
@@ -50,14 +48,10 @@ impl Database {
         Ok(Self { conn, deinflector })
     }
 
-    pub fn dict_exists(&self, index: &DictIndex) -> rusqlite::Result<bool> {
-        dict_exists(&self.conn, index)
-    }
-
     pub fn load(&mut self, dictionary: LoadedDict) -> rusqlite::Result<()> {
         let (index, term, term_meta, kanji, kanji_meta, tag) = dictionary;
 
-        if dict_exists(&self.conn, &index)? {
+        if self.dict_exists(&index)? {
             return Ok(());
         }
 
@@ -77,28 +71,11 @@ impl Database {
     }
 
     pub fn search<'a>(&'a mut self, text: &'a str) -> rusqlite::Result<Vec<SearchResult>> {
-        let deinf = self.deinflector.deinflect(text);
-        let mut s_sql = self.conn.prepare(
-            "SELECT
-                expression,
-                reading,
-                definition_tags,
-                rules,
-                score,
-                glossary,
-                sequence,
-                term_tags,
-                dictionary
-                FROM terms 
-            WHERE expression = ?",
-        )?;
-
-        // TODO: make this not peak at 12 levels of indent
-
-        Ok(deinf
+        self.deinflector
+            .deinflect(text)
             .into_iter()
             .map(|DeinflectionResult(term, meta)| {
-                struct LookupResult(Term, Vec<TermMeta>, Vec<Tag>, Vec<Tag>);
+                struct LookupResult(Term, Vec<Tag>, Vec<Tag>);
 
                 #[derive(PartialEq, Eq, PartialOrd, Ord)]
                 struct DedupKey(String, String);
@@ -115,54 +92,42 @@ impl Database {
                     })
                 }
 
-                let terms_r: Vec<LookupResult> = s_sql
-                    .query_map(
-                        params![&term],
-                        |e| -> Result<LookupResult, rusqlite::Error> {
-                            let term = Term {
-                                expression: e.get(0)?,
-                                reading: e.get(1)?,
-                                definition_tags: serde_json::from_str(&e.get::<_, String>(2)?)
-                                    .unwrap(),
-                                rules: e.get(3)?,
-                                score: e.get(4)?,
-                                glossary: serde_json::from_str(&e.get::<_, String>(5)?).unwrap(),
-                                sequence: e.get(6)?,
-                                term_tags: serde_json::from_str(&e.get::<_, String>(7)?).unwrap(),
-                            };
+                let terms_r = self
+                    .get_terms(&term)?
+                    .into_iter()
+                    .map(|(term, dict_id)| {
+                        let tags = self.get_tag_list(&term.definition_tags, &dict_id)?;
+                        let term_tags = self.get_tag_list(&term.term_tags, &dict_id)?;
 
-                            let dict_id: i64 = e.get(8)?;
-
-                            let tags = self.get_tag_list(&term.definition_tags, &dict_id)?;
-                            let term_tags = self.get_tag_list(&term.term_tags, &dict_id)?;
-                            Ok(LookupResult(term, Vec::<TermMeta>::new(), tags, term_tags))
-                        },
-                    )?
+                        Ok(LookupResult(term, tags, term_tags))
+                    })
                     .collect::<rusqlite::Result<_>>()?;
 
                 let terms_grouped = group_pairs(terms_r);
 
-                Ok(terms_grouped
+                terms_grouped
                     .into_iter()
                     .map(|(_, e)| {
                         let mut all_tags = vec![];
-                        SearchResult {
+
+                        let t = &e.get(0).unwrap().0;
+                        let term_meta = self.get_term_meta(&t.expression, &t.reading)?;
+                        Ok(SearchResult {
                             deinflection: meta.clone(),
                             glossares: e
                                 .into_iter()
-                                .map(|LookupResult(term, meta, tag, global)| {
+                                .map(|LookupResult(term, tag, global)| {
                                     all_tags.extend(global.into_iter());
-                                    (term, meta, tag)
+                                    (term, tag)
                                 })
                                 .collect::<Vec<_>>(),
                             tags: all_tags,
-                        }
+                            meta: term_meta,
+                        })
                     })
-                    .collect::<Vec<_>>())
+                    .collect::<rusqlite::Result<Vec<_>>>()
             })
-            .collect::<rusqlite::Result<Vec<_>>>()?
-            .into_iter()
-            .flatten()
-            .collect())
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .map(|e| e.into_iter().flatten().collect())
     }
 }

@@ -14,16 +14,8 @@ pub struct TermMeta {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum TermMetaEntry {
-    Frequency(i64),
-    Pitches(Vec<Pitch>),
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Pitch {
-    position: i64,
-    nasal: Option<Vec<i64>>,
-    devoice: Option<Vec<i64>>,
-    tags: Vec<String>,
+    Frequency(Option<String>, Option<i64>),
+    Pitches(Vec<i64>),
 }
 
 impl FromBank for TermMeta {
@@ -35,56 +27,38 @@ impl FromBank for TermMeta {
 fn convert(mut v: VecDeque<Value>) -> serde_json::Result<TermMeta> {
     let term = from_value(v.pop_front().unwrap())?;
 
-    Ok(match v.pop_back().unwrap() {
-        Value::Number(n) => TermMeta {
-            term,
-            reading: None,
-            entry: TermMetaEntry::Frequency(n.as_i64().unwrap()),
-        },
-        Value::Object(mut o) => {
-            let reading = o
-                .remove("reading")
-                .and_then(|e| e.as_str().map(|e| e.to_string()));
-
-            TermMeta {
+    Ok(match v.pop_front().unwrap().as_str().unwrap() {
+        "freq" => match v.pop_front().unwrap() {
+            Value::Number(n) => TermMeta {
                 term,
-                reading,
-                entry: match o.get("frequency") {
-                    Some(f) => TermMetaEntry::Frequency(f.as_i64().unwrap()),
-                    None => {
-                        let pitches: Vec<Value> = from_value(o.remove("pitches").unwrap())?;
-
-                        TermMetaEntry::Pitches(
-                            pitches
-                                .into_iter()
-                                .map(|mut e| e.as_object_mut().and_then(|e| parse_pitch(e)))
-                                .collect::<Option<_>>()
-                                .unwrap(),
-                        )
-                    }
-                },
-            }
-        }
+                reading: None,
+                entry: TermMetaEntry::Frequency(None, n.as_i64()),
+            },
+            Value::String(s) => TermMeta {
+                term,
+                reading: None,
+                entry: TermMetaEntry::Frequency(Some(s), None),
+            },
+            Value::Object(o) => TermMeta {
+                term: term,
+                reading: o
+                    .get("reading")
+                    .and_then(|e| e.as_str().map(|e| e.to_string())),
+                entry: freq_from_object(&o),
+            },
+            _ => panic!(),
+        },
+        "pitch" => todo!(),
         _ => panic!(),
     })
 }
-
-fn parse_pitch(v: &mut Map<String, Value>) -> Option<Pitch> {
-    Some(Pitch {
-        position: v.remove("position")?.as_i64()?,
-        nasal: v.remove("nasal").and_then(|e| num_or_array(e).ok()),
-        devoice: v.remove("devoice").and_then(|e| num_or_array(e).ok()),
-        tags: v
-            .remove("tags")
-            .and_then(|e| from_value(e).ok())
-            .unwrap_or(vec![]),
-    })
-}
-
-fn num_or_array(v: Value) -> serde_json::Result<Vec<i64>> {
-    Ok(match v {
-        Value::Number(n) => vec![n.as_i64().unwrap()],
-        Value::Array(a) => from_value(serde_json::Value::Array(a))?,
-        _ => panic!(),
-    })
+fn freq_from_object(map: &Map<String, Value>) -> TermMetaEntry {
+    TermMetaEntry::Frequency(
+        map.get("displayValue")
+            .and_then(|e| e.as_str().map(|e| e.to_string())),
+        vec![map.get("frequency"), map.get("value")]
+            .into_iter()
+            .flat_map(|e| e)
+            .find_map(|e| e.as_i64()),
+    )
 }

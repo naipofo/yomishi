@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { Tag } from "@yomishi-proto/scan_pb";
+    import { Frequency, Tag } from "@yomishi-proto/scan_pb";
 
     export let tags: Tag[];
+    export let freq: Frequency[] = [];
 </script>
 
 {#each tags as tag}
@@ -16,6 +17,14 @@
     >
         &lsqb;
         {tag.name}
+        &rsqb;
+    </i>
+{/each}
+
+{#each freq as fre}
+    <i class="tag">
+        &lsqb;
+        {fre.name} / {fre.value}
         &rsqb;
     </i>
 {/each}

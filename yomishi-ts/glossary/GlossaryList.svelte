@@ -16,7 +16,7 @@
                     <span class="rule">{rule}</span>
                 {/each}
             </span>
-            <TagList tags={result.tags} />
+            <TagList tags={result.tags} freq={result.frequency} />
         </header>
         <ol>
             <li>
