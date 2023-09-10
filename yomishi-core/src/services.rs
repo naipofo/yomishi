@@ -104,5 +104,6 @@ fn tag_to_proto(e: crate::dict::parser::tag::Tag) -> Tag {
     Tag {
         name: e.name,
         description: e.notes,
+        category: e.category,
     }
 }

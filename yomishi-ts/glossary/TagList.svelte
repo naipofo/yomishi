@@ -10,6 +10,7 @@
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <i
         class="tag"
+        data-category={tag.category}
         on:click={(_) => {
             alert(tag.description);
             // TODO: custom popup instead of alerts
