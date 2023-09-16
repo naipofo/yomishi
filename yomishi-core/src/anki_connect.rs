@@ -48,9 +48,9 @@ pub async fn find_notes(query: &str) -> Vec<i64> {
         .unwrap()
 }
 
-pub async fn add_note(deck: &str, model: &str, fields: &HashMap<String, String>) -> Vec<i64> {
+pub async fn add_note(deck: &str, model: &str, fields: &HashMap<String, String>) -> i64 {
     invoke(
-        "findNotes",
+        "addNote",
         serde_json::json!({ "note": { "deckName": deck, "modelName": model, "fields": fields }}),
     )
     .await

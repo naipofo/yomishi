@@ -2,9 +2,18 @@
     import { ScanResult } from "@yomishi-proto/scan_pb";
     import RubyRender from "./RubyRender.svelte";
     import TagList from "./TagList.svelte";
+    import { createPromiseClient } from "@bufbuild/connect";
+    import { createGrpcWebTransport } from "@bufbuild/connect-web";
+    import { Anki } from "@yomishi-proto/anki_connect";
 
     export let results: ScanResult[];
     console.log(results);
+
+    function addToAnki(result: ScanResult) {
+        const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
+        const client = createPromiseClient(Anki, transport);
+        client.saveDefinition({ result });
+    }
 </script>
 
 {#each results as result}
@@ -17,6 +26,7 @@
                 {/each}
             </span>
             <TagList tags={result.tags} freq={result.frequency} />
+            <button on:click={() => addToAnki(result)}>anki</button>
         </header>
         <ol>
             <li>
