@@ -9,6 +9,7 @@ use std::{path::Path, sync::Arc};
 use tokio::sync::Mutex;
 use tonic::transport::Server;
 
+mod anki_connect;
 mod database;
 mod deinflector;
 mod dict;
