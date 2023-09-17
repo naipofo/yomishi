@@ -1,5 +1,54 @@
-{{#*inline "glossary"}}
-    {{{formatGlossary data}}}
+{{#*inline "Tags"}}
+    {{#each tags}}
+        <i class="tag" data-category={{this.category}}>{{this.name}}</i>
+    {{/each}}
+    {{#each meta}}
+        <i class="tag">[{{this.dictionary}} / {{this.data.entry.Frequency}}]</i>
+    {{/each}}
+{{/inline}}
+
+{{#*inline "RubyHtml"}}
+    {{#each ruby}}
+        {{this}}
+    {{/each}}
+{{/inline}}
+
+{{#*inline "InflectionRules"}}
+    {{#each inflection_rules}}
+        {{this}}
+    {{/each}}
+{{/inline}}
+
+{{#*inline "GlossaryEntry"}}
+    {{expression}}
+    <ol>
+        {{#each glossary}}
+            <li>
+                {{formatGlossary this}}
+            </li>
+        {{/each}}
+    </ol>
+{{/inline}}
+
+{{#*inline "GlossaryList"}}
+    <ol>
+        {{#each glossaries}}
+            <li>
+                {{> GlossaryEntry this.term}}
+                {{> Tags}}
+            </li>
+        {{/each}}
+    </ol>
+{{/inline}}
+
+
+{{#*inline "FullGlossary"}}
+    <header>
+        {{> RubyHtml }}
+        {{> InflectionRules }}
+        {{> Tags }}
+    </header>
+    {{> GlossaryList }}    
 {{/inline}}
     
-{{~>(lookup this "marker")~}}
+{{~>(lookup this "marker") this.data ~}}

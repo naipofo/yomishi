@@ -1,14 +1,30 @@
+use crate::{
+    database::{DictionaryTagged, TermWithTags},
+    japanese::ruby::Segment,
+};
+
 use super::parser::{
     structured::{ItemData, StructuredContent, StructuredItem},
+    tag::Tag,
     term::{GlossaryDetailed, GlossaryEntry},
+    term_meta::TermMeta,
 };
 use handlebars::{handlebars_helper, Handlebars};
 use quick_xml::{
     events::{BytesEnd, BytesStart, BytesText, Event},
     Writer,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::io::Cursor;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GlossaryTemplateData {
+    pub ruby: Vec<Segment>,
+    pub inflection_rules: Vec<String>,
+    pub tags: Vec<Tag>,
+    pub meta: Vec<DictionaryTagged<TermMeta>>,
+    pub glossaries: Vec<TermWithTags>,
+}
 
 pub struct HandlebarsRenderer<'a>(Handlebars<'a>);
 
@@ -19,6 +35,7 @@ impl HandlebarsRenderer<'_> {
             .register_template_string("t1", include_str!("html/templates.hbs"))
             .unwrap();
 
+        // handlebars_helper!(FormatGlossary: |entry: Value| { println!("\n\n\n\n\n\n\n\n{:?}", entry); });
         handlebars_helper!(FormatGlossary: |entry: GlossaryEntry| { render_entry(entry) });
         handlebars.register_helper("formatGlossary", Box::new(FormatGlossary));
 
@@ -34,8 +51,8 @@ impl HandlebarsRenderer<'_> {
             .unwrap()
     }
 
-    pub fn render_singular_glossary(&self, entry: &GlossaryEntry) -> String {
-        self.render_marker("glossary", entry)
+    pub fn render_glossary(&self, glossaries: GlossaryTemplateData) -> String {
+        self.render_marker("FullGlossary", glossaries)
     }
 }
 

@@ -2,7 +2,7 @@ use rusqlite::{params, Connection};
 
 use crate::dict::parser::term_meta::TermMeta;
 
-use super::Database;
+use super::{Database, DictionaryTagged};
 
 pub fn insert_terms_meta_bulk(
     conn: &Connection,
@@ -39,7 +39,7 @@ impl Database {
         &self,
         term: &str,
         reading: &str,
-    ) -> rusqlite::Result<Vec<(String, TermMeta)>> {
+    ) -> rusqlite::Result<Vec<DictionaryTagged<TermMeta>>> {
         let mut prep = self.conn.prepare(
             "SELECT
                 term,
@@ -73,7 +73,11 @@ impl Database {
                 }
                 None => Some(self.get_dict_by_id(&dict_id).map(|d| (d, e))),
             })
-            .collect::<rusqlite::Result<_>>()?;
+            .collect::<rusqlite::Result<Vec<_>>>()?
+            .into_iter()
+            .map(|(dictionary, data)| DictionaryTagged { dictionary, data })
+            .collect();
+
         Ok(results)
     }
 }

@@ -2,7 +2,7 @@ mod step_search;
 
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use self::step_search::StepSearch;
@@ -19,7 +19,7 @@ pub struct DeinflectionRule {
 #[derive(Debug, Default, Clone)]
 pub struct DeinflectionResult<'a>(pub String, pub DeinflectionMeta<'a>);
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct DeinflectionMeta<'a> {
     pub source: &'a str,
     pub rules: Vec<&'a str>,

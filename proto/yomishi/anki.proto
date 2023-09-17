@@ -2,12 +2,10 @@ syntax = "proto3";
 
 package yomishi.anki;
 
-import "scan.proto";
-
 service Anki {
   rpc SaveDefinition(SaveDefinitionRequest) returns (SaveDefinitionReply) {}
 }
 
-message SaveDefinitionRequest { yomishi.scan.ScanResult result = 1; }
+message SaveDefinitionRequest { string result = 1; }
 
 message SaveDefinitionReply { }

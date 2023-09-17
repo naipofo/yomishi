@@ -5,9 +5,13 @@ mod tags;
 mod terms;
 mod terms_meta;
 
-use std::{collections::BTreeMap, path::Path, vec};
+use std::{
+    collections::{BTreeMap, HashSet},
+    path::Path,
+};
 
 use rusqlite::Connection;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     deinflector::{DeinflectionMeta, DeinflectionResult, Deinflector},
@@ -28,11 +32,25 @@ pub struct Database {
     deinflector: Deinflector,
 }
 
+#[derive(Deserialize, Serialize)]
 pub struct SearchResult<'a> {
+    #[serde(borrow)]
     pub deinflection: DeinflectionMeta<'a>,
-    pub glossares: Vec<(Term, Vec<Tag>)>,
+    pub glossaries: Vec<TermWithTags>,
     pub tags: Vec<Tag>,
-    pub meta: Vec<(String, TermMeta)>,
+    pub meta: Vec<DictionaryTagged<TermMeta>>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DictionaryTagged<T> {
+    pub dictionary: String,
+    pub data: T,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TermWithTags {
+    pub term: Term,
+    pub tags: Vec<Tag>,
 }
 
 impl Database {
@@ -108,20 +126,20 @@ impl Database {
                 terms_grouped
                     .into_iter()
                     .map(|(_, e)| {
-                        let mut all_tags = vec![];
+                        let mut all_tags = HashSet::new();
 
                         let t = &e.get(0).unwrap().0;
                         let term_meta = self.get_term_meta(&t.expression, &t.reading)?;
                         Ok(SearchResult {
                             deinflection: meta.clone(),
-                            glossares: e
+                            glossaries: e
                                 .into_iter()
-                                .map(|LookupResult(term, tag, global)| {
+                                .map(|LookupResult(term, tags, global)| {
                                     all_tags.extend(global.into_iter());
-                                    (term, tag)
+                                    TermWithTags { term, tags }
                                 })
                                 .collect::<Vec<_>>(),
-                            tags: all_tags,
+                            tags: all_tags.into_iter().collect(),
                             meta: term_meta,
                         })
                     })
