@@ -1,7 +1,6 @@
 use crate::{
-    database::{Database, SearchResult},
-    dict::html::{GlossaryTemplateData, HandlebarsRenderer},
-    japanese::ruby::try_from_reading,
+    database::Database,
+    html::{search_to_template_data, HandlebarsRenderer},
     protos::yomishi::scan::{self, ScanStringReply, ScanStringRequest},
 };
 use std::sync::Arc;
@@ -26,29 +25,9 @@ impl scan::scan_server::Scan for ScanService {
                 .search(&request.get_ref().text)
                 .unwrap()
                 .into_iter()
-                .map(search_to_proto)
+                .map(search_to_template_data)
                 .map(|data| HandlebarsRenderer::new().render_glossary(data))
                 .collect(),
         }))
-    }
-}
-
-fn search_to_proto(result: SearchResult) -> GlossaryTemplateData {
-    let SearchResult {
-        deinflection,
-        glossaries,
-        tags,
-        meta,
-    } = result;
-
-    GlossaryTemplateData {
-        ruby: try_from_reading(
-            glossaries.get(0).unwrap().term.expression.to_string(),
-            glossaries.get(0).unwrap().term.reading.to_string(),
-        ),
-        inflection_rules: deinflection.reasons.iter().map(|e| e.to_string()).collect(),
-        tags,
-        meta,
-        glossaries,
     }
 }

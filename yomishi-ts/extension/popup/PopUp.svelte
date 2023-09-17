@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { ScanStringReply } from "@yomishi-proto/scan_pb";
     import GlossaryList from "../../glossary/GlossaryList.svelte";
+    import { ScanMessage } from "../content-script/frames";
 
-    let data: ScanStringReply | null = null;
-    function messageHandler(e: MessageEvent<ScanStringReply>) {
-        data = e.data;
+    let message: ScanMessage | null = null;
+
+    function messageHandler(e: MessageEvent<ScanMessage>) {
+        message = e.data;
     }
 </script>
 
 <svelte:window on:message={messageHandler} />
-{#if data}
-    <GlossaryList results={data.results.reverse()} />
-    <!-- TODO: correct order from server -->
+{#if message}
+    <GlossaryList {message} />
 {:else}
     <h2>Loading...</h2>
 {/if}

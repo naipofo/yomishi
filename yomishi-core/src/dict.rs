@@ -14,7 +14,6 @@ use self::parser::{
     FromBank,
 };
 
-pub mod html;
 pub mod parser;
 
 #[derive(Debug, Deserialize)]

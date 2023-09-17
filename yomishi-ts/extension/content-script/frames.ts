@@ -1,6 +1,13 @@
 import { ScanStringReply } from "@yomishi-proto/scan_pb";
 import { browser } from "../browser-extension";
 
+// TODO: proper API between script and iframe
+// including proxing protobuf requests
+export type ScanMessage = {
+    data: ScanStringReply,
+    scanString: string
+}
+
 const height = 300;
 const width = 600;
 
@@ -17,7 +24,7 @@ function createFrame() {
 
 let frame: HTMLIFrameElement | null = null;
 
-export function updateFrame(data: ScanStringReply, scanRect: DOMRect) {
+export function updateFrame(data: ScanMessage, scanRect: DOMRect) {
     if (frame == null) {
         frame = createFrame();
     }

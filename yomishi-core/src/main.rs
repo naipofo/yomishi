@@ -20,6 +20,7 @@ mod anki_connect;
 mod database;
 mod deinflector;
 mod dict;
+mod html;
 mod japanese;
 mod protos;
 mod services;

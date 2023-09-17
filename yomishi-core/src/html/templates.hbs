@@ -1,30 +1,25 @@
 {{#*inline "Tags"}}
-    {{#each tags}}
+    {{~#each tags~}}
         <span class="tag" data-category={{this.category}}>{{this.name}}</span>
-    {{/each}}
-    {{#each meta}}
-        <span class="tag">{{this.dictionary}}<span>{{#if (lookup this.data.entry.Frequency 0)}}
+    {{~/each~}}
+    {{~#each meta~}}
+        <span class="tag">{{this.dictionary}}<span>{{#if (lookup this.data.entry.Frequency 0)~}}
                 {{lookup this.data.entry.Frequency 0}}
-            {{else}}
+            {{~else~}}
                 {{lookup this.data.entry.Frequency 1}}
-            {{/if}}
+            {{~/if~}}
         </span></span>
-    {{/each}}
+    {{~/each~}}
 {{/inline}}
 
 {{#*inline "RubyHtml"}}
-    {{#each ruby}}
-        {{#if (isArray this)}}
-            <ruby>
-                {{lookup this 0}}
-                <rt>
-                    {{lookup this 1}}
-                </rt>
-            </ruby>
-        {{else}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            <ruby>{{~lookup this 0~}}<rt>{{~lookup this 1~}}</rt></ruby>
+        {{~else~}}
             {{this}}
-        {{/if}}
-    {{/each}} 
+        {{~/if~}}
+    {{~/each~}} 
 {{/inline}}
 
 {{#*inline "RubyPlain"}}
@@ -44,22 +39,20 @@
 
 {{#*inline "GlossaryEntry"}}
     <ul>
-        {{#each glossary}}
-            <li>
-                {{{formatGlossary this}}}
-            </li>
-        {{/each}}
+        {{~#each glossary~}}
+            <li>{{{formatGlossary this}}}</li>
+        {{~/each~}}
     </ul>
 {{/inline}}
 
 {{#*inline "GlossaryList"}}
     <ol>
-        {{#each glossaries}}
+        {{~#each glossaries~}}
             <li>
-                {{> Tags}}
-                {{> GlossaryEntry this.term}}
+                {{~> Tags~}}
+                {{~> GlossaryEntry this.term~}}
             </li>
-        {{/each}}
+        {{~/each~}}
     </ol>
 {{/inline}}
 

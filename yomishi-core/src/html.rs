@@ -1,14 +1,14 @@
 use crate::{
-    database::{DictionaryTagged, TermWithTags},
-    japanese::ruby::Segment,
+    database::{DictionaryTagged, SearchResult, TermWithTags},
+    dict::parser::{
+        structured::{ItemData, StructuredContent, StructuredItem},
+        tag::Tag,
+        term::{GlossaryDetailed, GlossaryEntry},
+        term_meta::TermMeta,
+    },
+    japanese::ruby::{try_from_reading, Segment},
 };
 
-use super::parser::{
-    structured::{ItemData, StructuredContent, StructuredItem},
-    tag::Tag,
-    term::{GlossaryDetailed, GlossaryEntry},
-    term_meta::TermMeta,
-};
 use handlebars::{handlebars_helper, Handlebars};
 use quick_xml::{
     events::{BytesEnd, BytesStart, BytesText, Event},
@@ -45,7 +45,7 @@ impl HandlebarsRenderer<'_> {
         Self(handlebars)
     }
 
-    fn render_marker<T: Serialize>(&self, marker: &str, data: T) -> String {
+    pub fn render_marker<T: Serialize>(&self, marker: &str, data: T) -> String {
         self.0
             .render(
                 "t1",
@@ -151,4 +151,24 @@ fn text(writer: &mut Writer<Cursor<Vec<u8>>>, text: &str) -> quick_xml::Result<(
         }
     }
     Ok(())
+}
+
+pub fn search_to_template_data(result: SearchResult) -> GlossaryTemplateData {
+    let SearchResult {
+        deinflection,
+        glossaries,
+        tags,
+        meta,
+    } = result;
+
+    GlossaryTemplateData {
+        ruby: try_from_reading(
+            glossaries.get(0).unwrap().term.expression.to_string(),
+            glossaries.get(0).unwrap().term.reading.to_string(),
+        ),
+        inflection_rules: deinflection.reasons.iter().map(|e| e.to_string()).collect(),
+        tags,
+        meta,
+        glossaries,
+    }
 }

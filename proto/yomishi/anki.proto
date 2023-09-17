@@ -6,6 +6,10 @@ service Anki {
   rpc SaveDefinition(SaveDefinitionRequest) returns (SaveDefinitionReply) {}
 }
 
-message SaveDefinitionRequest { string result = 1; }
+message SaveDefinitionRequest {
+  string scanned = 1;
+  int32 index = 2;
+  // TODO: something that makes more sence?
+}
 
 message SaveDefinitionReply { }
