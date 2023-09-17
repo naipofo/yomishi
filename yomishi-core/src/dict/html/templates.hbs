@@ -9,8 +9,26 @@
 
 {{#*inline "RubyHtml"}}
     {{#each ruby}}
-        {{this}}
-    {{/each}}
+        {{#if (isArray this)}}
+            <ruby>
+                {{lookup this 0}}
+                <rt>
+                    {{lookup this 1}}
+                </rt>
+            </ruby>
+        {{else}}
+            {{this}}
+        {{/if}}
+    {{/each}} 
+{{/inline}}
+
+{{#*inline "RubyPlain"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)}} {{lookup this 0}}[{{lookup this 1}}]
+        {{~else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
 {{/inline}}
 
 {{#*inline "InflectionRules"}}
@@ -20,11 +38,10 @@
 {{/inline}}
 
 {{#*inline "GlossaryEntry"}}
-    {{expression}}
     <ol>
         {{#each glossary}}
             <li>
-                {{formatGlossary this}}
+                {{{formatGlossary this}}}
             </li>
         {{/each}}
     </ol>
@@ -34,11 +51,31 @@
     <ol>
         {{#each glossaries}}
             <li>
-                {{> GlossaryEntry this.term}}
                 {{> Tags}}
+                {{> GlossaryEntry this.term}}
             </li>
         {{/each}}
     </ol>
+{{/inline}}
+
+{{#*inline "Reading"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            {{lookup this 1}}
+        {{~else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
+{{/inline}}
+
+{{#*inline "Expression"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            {{lookup this 0}}
+        {{~else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
 {{/inline}}
 
 

@@ -15,6 +15,7 @@ use quick_xml::{
     Writer,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::io::Cursor;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,9 +36,11 @@ impl HandlebarsRenderer<'_> {
             .register_template_string("t1", include_str!("html/templates.hbs"))
             .unwrap();
 
-        // handlebars_helper!(FormatGlossary: |entry: Value| { println!("\n\n\n\n\n\n\n\n{:?}", entry); });
         handlebars_helper!(FormatGlossary: |entry: GlossaryEntry| { render_entry(entry) });
         handlebars.register_helper("formatGlossary", Box::new(FormatGlossary));
+
+        handlebars_helper!(CheckArray: |entry: Value| { entry.is_array() });
+        handlebars.register_helper("isArray", Box::new(CheckArray));
 
         Self(handlebars)
     }
