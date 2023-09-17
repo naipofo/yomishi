@@ -6,4 +6,7 @@ pub mod yomishi {
     pub mod anki {
         tonic::include_proto!("yomishi.anki");
     }
+    pub mod config {
+        tonic::include_proto!("yomishi.config");
+    }
 }

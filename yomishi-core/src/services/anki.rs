@@ -1,8 +1,9 @@
 use crate::{
-    anki_connect::add_note,
+    anki_connect::AnkiConnectClient,
     database::Database,
     protos::yomishi::{
         anki::{self, SaveDefinitionReply, SaveDefinitionRequest},
+        config::AnkiConnectConfig,
         scan::{RubySegment, ScanResult},
     },
 };
@@ -10,8 +11,11 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
+use super::config::ConfigState;
+
 pub struct AnkiService {
     pub db: Arc<Mutex<Database>>,
+    pub config: Arc<Mutex<ConfigState>>,
 }
 
 enum Field {
@@ -28,8 +32,9 @@ impl anki::anki_server::Anki for AnkiService {
         request: Request<SaveDefinitionRequest>,
     ) -> Result<Response<SaveDefinitionReply>, Status> {
         let res = &request.get_ref().result;
+        let config = &*self.config.lock().await;
         match res {
-            Some(e) => add_to_anki(e).await,
+            Some(e) => add_to_anki(e, config.0.anki_connect.as_ref().unwrap()).await,
             None => todo!(),
         }
 
@@ -37,29 +42,35 @@ impl anki::anki_server::Anki for AnkiService {
     }
 }
 
-async fn add_to_anki(result: &ScanResult) {
+async fn add_to_anki(result: &ScanResult, config: &AnkiConnectConfig) {
     let conf = sample_conf();
     let deck = "test1";
     let model = "Novelcards"; // Model from my collection
-    add_note(
-        &deck,
-        &model,
-        &conf
-            .into_iter()
-            .map(|(n, f)| {
-                (
-                    n,
-                    match f {
-                        Field::Expression => ruby_to_expression(&result.ruby),
-                        Field::Reading => ruby_to_reading(&result.ruby),
-                        Field::Furigana => ruby_to_anki(&result.ruby),
-                        Field::Glossary => result.glossary.get(0).unwrap().definition.join("<br>"),
-                    },
-                )
-            })
-            .collect(),
-    )
-    .await;
+
+    let client = AnkiConnectClient::new(&config.addrees);
+
+    client
+        .add_note(
+            &deck,
+            &model,
+            &conf
+                .into_iter()
+                .map(|(n, f)| {
+                    (
+                        n,
+                        match f {
+                            Field::Expression => ruby_to_expression(&result.ruby),
+                            Field::Reading => ruby_to_reading(&result.ruby),
+                            Field::Furigana => ruby_to_anki(&result.ruby),
+                            Field::Glossary => {
+                                result.glossary.get(0).unwrap().definition.join("<br>")
+                            }
+                        },
+                    )
+                })
+                .collect(),
+        )
+        .await;
 }
 
 fn sample_conf() -> HashMap<String, Field> {

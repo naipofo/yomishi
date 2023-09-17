@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package yomishi.config;
+
+service ConfigService {
+  rpc FetchConfig(FetchConfigRequest) returns (FetchConfigReply) {}
+  rpc PushConfig(PushConfigRequest) returns (PushConfigReply) {}
+}
+
+message FetchConfigRequest { }
+
+message FetchConfigReply { Config config = 1; }
+
+  
+message PushConfigRequest { Config config = 1; }
+
+message PushConfigReply { }
+
+message Config {
+  AnkiConnectConfig anki_connect = 1;
+}
+
+message AnkiConnectConfig {
+  bool enabled = 1;
+  string addrees = 2; 
+}
