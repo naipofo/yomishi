@@ -1,6 +1,6 @@
 use crate::{
     database::{Database, SearchResult},
-    dict::{html::render_glossary, parser::term_meta::TermMetaEntry},
+    dict::{html::HandlebarsRenderer, parser::term_meta::TermMetaEntry},
     japanese::ruby::try_from_reading,
     protos::yomishi::scan::{
         self, Frequency, Glossary, RubySegment, ScanResult, ScanStringReply, ScanStringRequest, Tag,
@@ -95,7 +95,7 @@ fn glossary_to_proto(
         definition: term
             .glossary
             .into_iter()
-            .map(|e| render_glossary(e).unwrap().0)
+            .map(|e| HandlebarsRenderer::new().render_singular_glossary(&e))
             .collect(),
     }
 }

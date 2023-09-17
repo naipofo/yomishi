@@ -2,13 +2,55 @@ use super::parser::{
     structured::{ItemData, StructuredContent, StructuredItem},
     term::{GlossaryDetailed, GlossaryEntry},
 };
+use handlebars::{handlebars_helper, Handlebars};
 use quick_xml::{
     events::{BytesEnd, BytesStart, BytesText, Event},
     Writer,
 };
+use serde::Serialize;
 use std::io::Cursor;
 
-pub fn render_glossary(glossary: GlossaryEntry) -> quick_xml::Result<(String, Vec<String>)> {
+pub struct HandlebarsRenderer<'a>(Handlebars<'a>);
+
+impl HandlebarsRenderer<'_> {
+    pub fn new() -> Self {
+        let mut handlebars = Handlebars::new();
+        handlebars
+            .register_template_string("t1", include_str!("html/templates.hbs"))
+            .unwrap();
+
+        handlebars_helper!(FormatGlossary: |entry: GlossaryEntry| { render_entry(entry) });
+        handlebars.register_helper("formatGlossary", Box::new(FormatGlossary));
+
+        Self(handlebars)
+    }
+
+    fn render_marker<T: Serialize>(&self, marker: &str, data: T) -> String {
+        self.0
+            .render(
+                "t1",
+                &serde_json::json!({ "marker": marker, "data": &data }),
+            )
+            .unwrap()
+    }
+
+    pub fn render_singular_glossary(&self, entry: &GlossaryEntry) -> String {
+        self.render_marker("glossary", entry)
+    }
+}
+
+fn render_entry(entry: GlossaryEntry) -> String {
+    match entry {
+        GlossaryEntry::Text(t) => render_pure_text(&t),
+        GlossaryEntry::Detailed(_) => render_glossary_old(entry).unwrap().0,
+    }
+}
+
+fn render_pure_text(text: &str) -> String {
+    text.split("\n").collect::<Vec<_>>().join("<br>")
+}
+
+pub fn render_glossary_old(glossary: GlossaryEntry) -> quick_xml::Result<(String, Vec<String>)> {
     let mut writer = Writer::new(Cursor::new(vec![]));
     let mut paths = vec![];
 
@@ -17,7 +59,7 @@ pub fn render_glossary(glossary: GlossaryEntry) -> quick_xml::Result<(String, Ve
             text(&mut writer, &t)?;
         }
         GlossaryEntry::Detailed(d) => match d {
-            GlossaryDetailed::Text { text } => return render_glossary(GlossaryEntry::Text(text)),
+            GlossaryDetailed::Text { text } => return Ok((render_pure_text(&text), vec![])),
             GlossaryDetailed::Image { path } => {
                 writer
                     .create_element("img")
