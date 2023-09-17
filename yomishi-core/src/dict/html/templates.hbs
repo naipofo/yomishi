@@ -1,9 +1,14 @@
 {{#*inline "Tags"}}
     {{#each tags}}
-        <i class="tag" data-category={{this.category}}>{{this.name}}</i>
+        <span class="tag" data-category={{this.category}}>{{this.name}}</span>
     {{/each}}
     {{#each meta}}
-        <i class="tag">[{{this.dictionary}} / {{this.data.entry.Frequency}}]</i>
+        <span class="tag">{{this.dictionary}}<span>{{#if (lookup this.data.entry.Frequency 0)}}
+                {{lookup this.data.entry.Frequency 0}}
+            {{else}}
+                {{lookup this.data.entry.Frequency 1}}
+            {{/if}}
+        </span></span>
     {{/each}}
 {{/inline}}
 
@@ -32,19 +37,19 @@
 {{/inline}}
 
 {{#*inline "InflectionRules"}}
-    {{#each inflection_rules}}
-        {{this}}
-    {{/each}}
+    {{~#each inflection_rules~}}
+        <i class="rule">{{this}}</i>
+    {{~/each~}}
 {{/inline}}
 
 {{#*inline "GlossaryEntry"}}
-    <ol>
+    <ul>
         {{#each glossary}}
             <li>
                 {{{formatGlossary this}}}
             </li>
         {{/each}}
-    </ol>
+    </ul>
 {{/inline}}
 
 {{#*inline "GlossaryList"}}
@@ -80,12 +85,11 @@
 
 
 {{#*inline "FullGlossary"}}
-    <header>
-        {{> RubyHtml }}
-        {{> InflectionRules }}
-        {{> Tags }}
+    <header><span class="expression">{{> RubyHtml }}</span>
+        {{~> InflectionRules ~}}
+        {{~> Tags ~}}
     </header>
-    {{> GlossaryList }}    
+    {{~> GlossaryList ~}}    
 {{/inline}}
     
 {{~>(lookup this "marker") this.data ~}}

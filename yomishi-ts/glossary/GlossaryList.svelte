@@ -5,29 +5,23 @@
 
 {#each results as result}
     <article>
+        <div class="buttons">
+            <button>anki</button>
+        </div>
         {@html result}
     </article>
 {/each}
+
+<svelte:head>
+    <link rel="stylesheet" type="text/css" href="glolist.css" media="all" />
+</svelte:head>
 
 <style>
     article:not(:last-child) {
         border-bottom: 1px solid black;
         margin-bottom: 10px;
     }
-    header {
-        font-size: 2rem;
-    }
-    .rule {
-        font-size: 1rem;
-    }
-    .rule:not(:last-child)::after {
-        content: " / ";
-    }
-    ol:has(li:only-child) {
-        list-style: none;
-        padding-left: 0;
-    }
-    li.rendered {
-        white-space: pre-line;
+    .buttons {
+        float: right;
     }
 </style>
