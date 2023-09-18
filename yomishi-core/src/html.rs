@@ -24,7 +24,7 @@ pub struct GlossaryTemplateData {
     pub inflection_rules: Vec<String>,
     pub tags: Vec<Tag>,
     pub meta: Vec<DictionaryTagged<TermMeta>>,
-    pub glossaries: Vec<TermWithTags>,
+    pub glossaries: Vec<DictionaryTagged<TermWithTags>>,
 }
 
 pub struct HandlebarsRenderer<'a>(Handlebars<'a>);
@@ -55,7 +55,7 @@ impl HandlebarsRenderer<'_> {
     }
 
     pub fn render_glossary(&self, glossaries: GlossaryTemplateData) -> String {
-        self.render_marker("FullGlossary", glossaries)
+        self.render_marker("full-glossary", glossaries)
     }
 }
 
@@ -163,8 +163,8 @@ pub fn search_to_template_data(result: SearchResult) -> GlossaryTemplateData {
 
     GlossaryTemplateData {
         ruby: try_from_reading(
-            glossaries.get(0).unwrap().term.expression.to_string(),
-            glossaries.get(0).unwrap().term.reading.to_string(),
+            glossaries.get(0).unwrap().data.term.expression.to_string(),
+            glossaries.get(0).unwrap().data.term.reading.to_string(),
         ),
         inflection_rules: deinflection.reasons.iter().map(|e| e.to_string()).collect(),
         tags,

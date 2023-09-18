@@ -36,7 +36,7 @@ pub struct Database {
 pub struct SearchResult<'a> {
     #[serde(borrow)]
     pub deinflection: DeinflectionMeta<'a>,
-    pub glossaries: Vec<TermWithTags>,
+    pub glossaries: Vec<DictionaryTagged<TermWithTags>>,
     pub tags: Vec<Tag>,
     pub meta: Vec<DictionaryTagged<TermMeta>>,
 }
@@ -44,6 +44,7 @@ pub struct SearchResult<'a> {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DictionaryTagged<T> {
     pub dictionary: String,
+    #[serde(flatten)]
     pub data: T,
 }
 
@@ -93,7 +94,7 @@ impl Database {
             .deinflect(text)
             .into_iter()
             .map(|DeinflectionResult(term, meta)| {
-                struct LookupResult(Term, Vec<Tag>, Vec<Tag>);
+                struct LookupResult(Term, Vec<Tag>, Vec<Tag>, String);
 
                 #[derive(PartialEq, Eq, PartialOrd, Ord)]
                 struct DedupKey(String, String);
@@ -117,7 +118,12 @@ impl Database {
                         let tags = self.get_tag_list(&term.definition_tags, &dict_id)?;
                         let term_tags = self.get_tag_list(&term.term_tags, &dict_id)?;
 
-                        Ok(LookupResult(term, tags, term_tags))
+                        Ok(LookupResult(
+                            term,
+                            tags,
+                            term_tags,
+                            self.get_dict_by_id(&dict_id)?,
+                        ))
                     })
                     .collect::<rusqlite::Result<_>>()?;
 
@@ -134,9 +140,12 @@ impl Database {
                             deinflection: meta.clone(),
                             glossaries: e
                                 .into_iter()
-                                .map(|LookupResult(term, tags, global)| {
+                                .map(|LookupResult(term, tags, global, dictionary)| {
                                     all_tags.extend(global.into_iter());
-                                    TermWithTags { term, tags }
+                                    DictionaryTagged {
+                                        data: TermWithTags { term, tags },
+                                        dictionary,
+                                    }
                                 })
                                 .collect::<Vec<_>>(),
                             tags: all_tags.into_iter().collect(),

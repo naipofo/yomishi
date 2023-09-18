@@ -1,5 +1,8 @@
 header .expression {
   font-size: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
 }
 header rt {
   margin-bottom: -0.5em;

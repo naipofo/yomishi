@@ -1,27 +1,3 @@
-{{#*inline "Tags"}}
-    {{~#each tags~}}
-        <span class="tag" data-category={{this.category}}>{{this.name}}</span>
-    {{~/each~}}
-    {{~#each meta~}}
-        <span class="tag">{{this.dictionary}}<span>{{#if (lookup this.data.entry.Frequency 0)~}}
-                {{lookup this.data.entry.Frequency 0}}
-            {{~else~}}
-                {{lookup this.data.entry.Frequency 1}}
-            {{~/if~}}
-        </span></span>
-    {{~/each~}}
-{{/inline}}
-
-{{#*inline "RubyHtml"}}
-    {{~#each ruby~}}
-        {{~#if (isArray this)~}}
-            <ruby>{{~lookup this 0~}}<rt>{{~lookup this 1~}}</rt></ruby>
-        {{~else~}}
-            {{this}}
-        {{~/if~}}
-    {{~/each~}} 
-{{/inline}}
-
 {{#*inline "RubyPlain"}}
     {{~#each ruby~}}
         {{~#if (isArray this)}} {{lookup this 0}}[{{lookup this 1}}]
@@ -31,29 +7,12 @@
     {{~/each~}} 
 {{/inline}}
 
-{{#*inline "InflectionRules"}}
-    {{~#each inflection_rules~}}
-        <i class="rule">{{this}}</i>
-    {{~/each~}}
-{{/inline}}
-
 {{#*inline "GlossaryEntry"}}
     <ul>
         {{~#each glossary~}}
             <li>{{{formatGlossary this}}}</li>
         {{~/each~}}
     </ul>
-{{/inline}}
-
-{{#*inline "GlossaryList"}}
-    <ol>
-        {{~#each glossaries~}}
-            <li>
-                {{~> Tags~}}
-                {{~> GlossaryEntry this.term~}}
-            </li>
-        {{~/each~}}
-    </ol>
 {{/inline}}
 
 {{#*inline "Reading"}}
@@ -76,13 +35,84 @@
     {{~/each~}} 
 {{/inline}}
 
+{{!-- New follows: --}}
 
-{{#*inline "FullGlossary"}}
-    <header><span class="expression">{{> RubyHtml }}</span>
-        {{~> InflectionRules ~}}
-        {{~> Tags ~}}
-    </header>
-    {{~> GlossaryList ~}}    
+{{#*inline "full-glossary"~}}
+    <header><span class="expression">{{> ruby-html }}</span><i class="rules">
+        {{~> inflection-rules ~}}
+        </i>
+        {{~> tags-meta ~}}
+    </header><main>
+        {{~> glossary-list ~}}
+    </main>
+{{~/inline}}
+
+{{#*inline "ruby-html"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            <ruby>{{lookup this 0}}<rt>{{lookup this 1}}</rt></ruby>
+        {{~else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
+{{/inline}}
+
+{{#*inline "inflection-rules"}}
+    {{~#each inflection_rules~}}
+        {{~#if (gt @index 0)}} « {{/if~}}
+        {{this}}
+    {{~/each~}}
+{{/inline}}
+
+{{#*inline "glossary-list"~}}
+    {{~#if (eq 1 (len glossaries))~}}
+        {{~#with (lookup this.glossaries 0)~}}
+            {{> single-glossary}}
+        {{~/with~}}
+    {{~else~}}
+        <ol>
+            {{~#each glossaries~}}
+                <li>
+                    {{~> single-glossary~}}
+                </li>
+            {{~/each~}}
+        </ol>
+    {{~/if~}}
+{{~/inline}}
+
+{{#*inline "test"~}}
+    {{asd this}}
+{{~/inline}}
+
+{{#*inline "single-glossary"~}}
+    <div>{{~>tags-meta~}}<span class="tag dict">{{dictionary}}</span></div>
+    {{~#if (eq 1 (len term.glossary))~}}
+            {{{formatGlossary (lookup term.glossary 0)}}}
+    {{~else~}}
+        <ul>
+            {{~#each term.glossary~}}
+                <li>{{{formatGlossary this}}}</li>
+            {{~/each~}}
+        </ul>
+    {{~/if~}}
+{{~/inline}}
+
+{{#*inline "tags-meta"}}
+    {{~#each tags~}}
+        <span class="tag" data-category={{this.category}}>
+            {{~this.name~}}
+        </span>
+    {{~/each~}}
+
+    {{~#each meta~}}
+        <span class="tag"><span class="label">{{this.dictionary}}</span><span class="contnet">
+            {{~#if (lookup this.data.entry.Frequency 0)~}}
+                {{lookup this.data.entry.Frequency 0}}
+            {{~else~}}
+                {{lookup this.data.entry.Frequency 1}}
+            {{~/if~}}
+        </span></span>
+    {{~/each~}}
 {{/inline}}
     
 {{~>(lookup this "marker") this.data ~}}
