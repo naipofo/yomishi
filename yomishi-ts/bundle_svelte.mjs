@@ -1,4 +1,5 @@
 import { build } from "esbuild";
+import { sassPlugin } from "esbuild-sass-plugin";
 import sveltePlugin from "esbuild-svelte";
 import { readFileSync, writeFileSync } from "fs";
 import { basename } from "path";
@@ -18,6 +19,9 @@ build({
     entryPoints: [entrypoint],
     outfile: bundle_js,
     plugins: [
+        sassPlugin({
+            loadPaths: [".", "node_modules"],
+        }),
         sveltePlugin({
             preprocess: [sveltePreprocess({ typescript: true, sourceMap: true })],
         }),

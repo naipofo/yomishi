@@ -33,7 +33,9 @@
     <link rel="stylesheet" type="text/css" href="glolist.css" media="all" />
 </svelte:head>
 
-<style>
+<style lang="scss">
+    @use "yomishi-styles/tag-colors";
+
     article:not(:last-child) {
         border-bottom: 1px solid black;
         margin-bottom: 10px;

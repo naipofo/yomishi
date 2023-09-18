@@ -45,17 +45,3 @@ ul:has(li:only-child) {
   list-style: none;
   padding-left: 0px;
 }
-
-.tag.dict {
-  --tag-color: #aa66cc;
-}
-.tag.freq {
-  --tag-color: #5cb85c;
-}
-/* TODO: tag colors */
-[data-category] {
-  --tag-color: #5bc0de;
-}
-[data-category="partOfSpeech"] {
-  --tag-color: #565656;
-}

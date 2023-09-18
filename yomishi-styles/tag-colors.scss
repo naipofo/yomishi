@@ -1,0 +1,35 @@
+$tag-styles: (
+    name: #b6327a,
+    expression: #f0ad4e,
+    popular: #0275d8,
+    frequent: #5bc0de,
+    archaism: #d9534f,
+    dictionary: #aa66cc,
+    frequency: #5cb85c,
+    partOfSpeech: #565656,
+    search: #8a8a91,
+    pronunciationDictionary: #6640be,
+);
+
+:global(.tag) {
+    --tag-color: #565656;
+}
+:global(.tag.dict) {
+    --tag-color: #aa66cc;
+}
+:global(.tag.freq) {
+    --tag-color: #5cb85c;
+}
+
+@each $key, $value in $tag-styles {
+    $selector: '[data-category="#{$key}"]';
+    $property: "--tag-color";
+    $tag-styles: map-merge($tag-styles, (#{$selector}: (#{$property}: #{$value})));
+}
+@each $selector, $properties in $tag-styles {
+    :global(.tag#{$selector}) {
+        @each $property, $value in $properties {
+            #{$property}: #{$value};
+        }
+    }
+}
