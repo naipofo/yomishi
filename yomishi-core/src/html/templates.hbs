@@ -105,11 +105,11 @@
     {{~/each~}}
 
     {{~#each meta~}}
-        <span class="tag"><span class="label">{{this.dictionary}}</span><span class="contnet">
-            {{~#if (lookup this.data.entry.Frequency 0)~}}
-                {{lookup this.data.entry.Frequency 0}}
+        <span class="tag freq"><span class="label">{{this.dictionary}}</span><span class="content">
+            {{~#if (lookup entry.Frequency 0)~}}
+                {{lookup entry.Frequency 0}}
             {{~else~}}
-                {{lookup this.data.entry.Frequency 1}}
+                {{lookup entry.Frequency 1}}
             {{~/if~}}
         </span></span>
     {{~/each~}}
