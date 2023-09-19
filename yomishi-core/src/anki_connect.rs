@@ -11,13 +11,17 @@ pub struct AnkiConnectClient<'a> {
 
 macro_rules! r {
     ($name:ident, $action:expr, $o:ty) => {
-        pub async fn $name(&self) -> $o {
-            self.invoke($action, serde_json::json!({})).await.unwrap()
+        impl AnkiConnectClient<'_> {
+            pub async fn $name(&self) -> $o {
+                self.invoke($action, serde_json::json!({})).await.unwrap()
+            }
         }
     };
     ($name:ident, $action:expr, $i:ty, $o:ty) => {
-        pub async fn $name(&self, e: $i) -> $o {
-            self.invoke($action, e).await.unwrap()
+        impl AnkiConnectClient<'_> {
+            pub async fn $name(&self, e: &$i) -> $o {
+                self.invoke($action, e).await.unwrap()
+            }
         }
     };
 }
@@ -47,30 +51,48 @@ impl AnkiConnectClient<'_> {
             .await?
             .json::<HashMap<String, Value>>()
             .await?;
-        println!("{:?}", result);
+        println!("resul: {:?}", result);
         Ok(serde_json::from_value(result.remove("result").unwrap()).unwrap())
     }
-    r!(deck_names, "deckNames", Vec<String>);
-    r!(model_names, "modelNames", Vec<String>);
-
-    pub async fn model_field_names(&self, name: &str) -> Vec<String> {
-        self.invoke("modelFieldNames", serde_json::json!({ "modelName": name }))
-            .await
-            .unwrap()
-    }
-
-    pub async fn find_notes(&self, query: &str) -> Vec<i64> {
-        self.invoke("findNotes", serde_json::json!({ "query": query }))
-            .await
-            .unwrap()
-    }
-
-    pub async fn add_note(&self, deck: &str, model: &str, fields: &HashMap<String, String>) -> i64 {
-        self.invoke(
-            "addNote",
-            serde_json::json!({ "note": { "deckName": deck, "modelName": model, "fields": fields }}),
-        )
-        .await
-        .unwrap()
-    }
 }
+
+r!(deck_names, "deckNames", Vec<String>);
+r!(model_names, "modelNames", Vec<String>);
+
+#[derive(Serialize)]
+pub struct FindNotes<'a> {
+    pub query: &'a str,
+}
+r!(find_notes, "findNotes", FindNotes<'_>, Vec<i64>);
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelNames<'a> {
+    pub model_name: &'a str,
+}
+r!(
+    model_field_names,
+    "modelFieldNames",
+    ModelNames<'_>,
+    Vec<String>
+);
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Note<'a> {
+    pub deck_name: &'a str,
+    pub model_name: &'a str,
+    pub fields: &'a HashMap<&'a str, &'a str>,
+}
+
+#[derive(Serialize)]
+pub struct AddNote<'a> {
+    pub note: &'a Note<'a>,
+}
+r!(add_note, "addNote", AddNote<'_>, i64);
+
+#[derive(Serialize)]
+pub struct CanAddNotes<'a> {
+    pub notes: &'a Vec<&'a Note<'a>>,
+}
+r!(can_add_notes, "canAddNotes", CanAddNotes<'_>, Vec<bool>);

@@ -1,42 +1,3 @@
-{{#*inline "RubyPlain"}}
-    {{~#each ruby~}}
-        {{~#if (isArray this)}} {{lookup this 0}}[{{lookup this 1}}]
-        {{~else~}}
-            {{this}}
-        {{~/if~}}
-    {{~/each~}} 
-{{/inline}}
-
-{{#*inline "GlossaryEntry"}}
-    <ul>
-        {{~#each glossary~}}
-            <li>{{{formatGlossary this}}}</li>
-        {{~/each~}}
-    </ul>
-{{/inline}}
-
-{{#*inline "Reading"}}
-    {{~#each ruby~}}
-        {{~#if (isArray this)~}}
-            {{lookup this 1}}
-        {{~else~}}
-            {{this}}
-        {{~/if~}}
-    {{~/each~}} 
-{{/inline}}
-
-{{#*inline "Expression"}}
-    {{~#each ruby~}}
-        {{~#if (isArray this)~}}
-            {{lookup this 0}}
-        {{~else~}}
-            {{this}}
-        {{~/if~}}
-    {{~/each~}} 
-{{/inline}}
-
-{{!-- New follows: --}}
-
 {{#*inline "full-glossary"~}}
     <header><span class="expression">{{> ruby-html }}</span><i class="rules">
         {{~> inflection-rules ~}}
@@ -80,10 +41,6 @@
     {{~/if~}}
 {{~/inline}}
 
-{{#*inline "test"~}}
-    {{asd this}}
-{{~/inline}}
-
 {{#*inline "single-glossary"~}}
     <div>{{~>tags-meta~}}<span class="tag dict">{{dictionary}}</span></div>
     {{~#if (eq 1 (len term.glossary))~}}
@@ -113,6 +70,35 @@
             {{~/if~}}
         </span></span>
     {{~/each~}}
+{{/inline}}
+
+{{#*inline "ruby-plain"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            {{lookup this 0}}[{{lookup this 1}}] {{else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
+{{/inline}}
+
+{{#*inline "reading"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            {{lookup this 1}}
+        {{~else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
+{{/inline}}
+
+{{#*inline "expression"}}
+    {{~#each ruby~}}
+        {{~#if (isArray this)~}}
+            {{lookup this 0}}
+        {{~else~}}
+            {{this}}
+        {{~/if~}}
+    {{~/each~}} 
 {{/inline}}
     
 {{~>(lookup this "marker") this.data ~}}
