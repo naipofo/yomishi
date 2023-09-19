@@ -41,6 +41,15 @@ pub fn default_config() -> Config {
         anki_connect: Some(AnkiConnectConfig {
             enabled: true,
             addrees: "http://127.0.0.1:8765".to_string(),
+            // Model from my collection
+            deck_name: "test1".to_string(),
+            model_name: "Novelcards".to_string(),
+            fields: vec![
+                ("Word".to_string(), "ruby-plain".to_string()),
+                ("Glossary".to_string(), "glossary-list".to_string()),
+            ]
+            .into_iter()
+            .collect(),
         }),
     }
 }

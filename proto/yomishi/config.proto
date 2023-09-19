@@ -23,4 +23,7 @@ message Config {
 message AnkiConnectConfig {
   bool enabled = 1;
   string addrees = 2; 
+  string deck_name = 3;
+  string model_name = 4;
+  map<string, string> fields = 5;
 }

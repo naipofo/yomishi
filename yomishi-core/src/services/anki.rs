@@ -1,13 +1,14 @@
 use crate::{
-    anki_connect::{AddNote, AnkiConnectClient, CanAddNotes, Note},
+    anki_connect::{AddNote, AnkiConnectClient, Note},
     database::Database,
-    html::{search_to_template_data, GlossaryTemplateData, HandlebarsRenderer},
+    flashcard::build_fields,
+    html::{search_to_template_data, GlossaryTemplateData},
     protos::yomishi::{
         anki::{self, SaveDefinitionReply, SaveDefinitionRequest},
         config::AnkiConnectConfig,
     },
 };
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
@@ -42,41 +43,13 @@ impl anki::anki_server::Anki for AnkiService {
 }
 
 async fn add_to_anki(data: &GlossaryTemplateData, config: &AnkiConnectConfig) {
-    let deck_name = "test1";
-    let model_name = "Novelcards"; // Model from my collection
-
     let client = AnkiConnectClient::new(&config.addrees);
-
-    let hb = HandlebarsRenderer::new();
-
-    let sample_conf = sample_conf();
-    let fields = sample_conf
-        .iter()
-        .map(|(field, marker)| (field, hb.render_marker(&marker, data)))
-        .collect::<Vec<_>>();
+    let fields = build_fields(data, &config.fields);
     let note_model = Note {
-        deck_name,
-        model_name,
-        fields: &fields.iter().map(|(a, b)| (a.as_str(), b.trim())).collect(),
+        deck_name: &config.deck_name,
+        model_name: &config.model_name,
+        fields: &fields.iter().map(|(a, b)| (*a, b.trim())).collect(),
     };
 
-    let can = client
-        .can_add_notes(&CanAddNotes {
-            notes: &vec![&note_model],
-        })
-        .await;
-
-    println!("can ? {:?}", can);
-
-    println!(
-        "will ? {:?}",
-        client.add_note(&AddNote { note: &note_model }).await
-    );
-}
-
-fn sample_conf() -> HashMap<String, String> {
-    let mut conf = HashMap::new();
-    conf.insert("Word".to_string(), "ruby-plain".to_string());
-    conf.insert("Glossary".to_string(), "glossary-list".to_string());
-    conf
+    client.add_note(&AddNote { note: &note_model }).await;
 }

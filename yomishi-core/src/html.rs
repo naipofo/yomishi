@@ -54,7 +54,7 @@ impl HandlebarsRenderer<'_> {
             .unwrap()
     }
 
-    pub fn render_glossary(&self, glossaries: GlossaryTemplateData) -> String {
+    pub fn render_glossary(&self, glossaries: &GlossaryTemplateData) -> String {
         self.render_marker("full-glossary", glossaries)
     }
 }

@@ -8,4 +8,10 @@ service Scan {
 
 message ScanStringRequest { string text = 1; }
 
-message ScanStringReply { repeated string results = 1; }
+message ScanStringReply { repeated ScanResult results = 1; }
+
+message ScanResult {
+  string content = 1;
+  bool anki_can_add = 2;
+  optional int64 card_id = 3;
+} 

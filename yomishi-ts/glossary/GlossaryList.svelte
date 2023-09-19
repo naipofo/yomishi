@@ -6,10 +6,15 @@
 
     export let message: ScanMessage;
 
+    let justAdded: number[] = [];
+
     // TODO: correct order from server
     $: reversed = message.data.results.reverse();
+    $: message, (justAdded = []);
 
     function addToAnki(index: number) {
+        justAdded = [...justAdded, index];
+
         const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
         const client = createPromiseClient(Anki, transport);
         client.saveDefinition({
@@ -23,9 +28,14 @@
 {#each reversed as result, i}
     <article>
         <div class="buttons">
-            <button on:click={() => addToAnki(i)}>anki</button>
+            <button
+                on:click={() => addToAnki(i)}
+                disabled={!result.ankiCanAdd || justAdded.indexOf(i) !== -1}
+            >
+                anki
+            </button>
         </div>
-        {@html result}
+        {@html result.content}
     </article>
 {/each}
 

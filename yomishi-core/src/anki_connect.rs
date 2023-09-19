@@ -51,7 +51,6 @@ impl AnkiConnectClient<'_> {
             .await?
             .json::<HashMap<String, Value>>()
             .await?;
-        println!("resul: {:?}", result);
         Ok(serde_json::from_value(result.remove("result").unwrap()).unwrap())
     }
 }

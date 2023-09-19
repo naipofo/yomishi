@@ -20,6 +20,7 @@ mod anki_connect;
 mod database;
 mod deinflector;
 mod dict;
+mod flashcard;
 mod html;
 mod japanese;
 mod protos;
@@ -49,7 +50,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Arc::new(Mutex::new(config));
     let addr = "[::1]:50051".parse()?;
 
-    let scan_service = ScanService { db: db.clone() };
+    let scan_service = ScanService {
+        db: db.clone(),
+        config: config.clone(),
+    };
     let anki_service = AnkiService {
         db: db.clone(),
         config: config.clone(),
