@@ -1,6 +1,5 @@
 use crate::{
     anki_connect::{AddNote, AnkiConnectClient, Note},
-    database::Database,
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData},
     protos::yomishi::{
@@ -8,19 +7,12 @@ use crate::{
         config::AnkiConnectConfig,
     },
 };
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
-use super::config::ConfigState;
-
-pub struct AnkiService {
-    pub db: Arc<Mutex<Database>>,
-    pub config: Arc<Mutex<ConfigState>>,
-}
+use super::Backend;
 
 #[tonic::async_trait]
-impl anki::anki_server::Anki for AnkiService {
+impl anki::anki_server::Anki for Backend {
     async fn save_definition(
         &self,
         request: Request<SaveDefinitionRequest>,

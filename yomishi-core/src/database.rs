@@ -33,9 +33,8 @@ pub struct Database {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct SearchResult<'a> {
-    #[serde(borrow)]
-    pub deinflection: DeinflectionMeta<'a>,
+pub struct SearchResult {
+    pub deinflection: DeinflectionMeta,
     pub glossaries: Vec<DictionaryTagged<TermWithTags>>,
     pub tags: Vec<Tag>,
     pub meta: Vec<DictionaryTagged<TermMeta>>,
@@ -89,7 +88,7 @@ impl Database {
         tx.commit()
     }
 
-    pub fn search<'a>(&'a mut self, text: &'a str) -> rusqlite::Result<Vec<SearchResult>> {
+    pub fn search(&mut self, text: &str) -> rusqlite::Result<Vec<SearchResult>> {
         self.deinflector
             .deinflect(text)
             .into_iter()

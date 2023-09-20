@@ -2,18 +2,12 @@ use crate::protos::yomishi::config::{
     self, AnkiConnectConfig, Config, FetchConfigReply, FetchConfigRequest, PushConfigReply,
     PushConfigRequest,
 };
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
-pub struct ConfigState(pub Config);
-
-pub struct ConfigService {
-    pub config: Arc<Mutex<ConfigState>>,
-}
+use super::Backend;
 
 #[tonic::async_trait]
-impl config::config_service_server::ConfigService for ConfigService {
+impl config::config_service_server::ConfigService for Backend {
     async fn fetch_config(
         &self,
         _: Request<FetchConfigRequest>,

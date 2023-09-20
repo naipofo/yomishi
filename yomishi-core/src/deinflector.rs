@@ -17,13 +17,13 @@ pub struct DeinflectionRule {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct DeinflectionResult<'a>(pub String, pub DeinflectionMeta<'a>);
+pub struct DeinflectionResult(pub String, pub DeinflectionMeta);
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
-pub struct DeinflectionMeta<'a> {
-    pub source: &'a str,
-    pub rules: Vec<&'a str>,
-    pub reasons: Vec<&'a str>,
+pub struct DeinflectionMeta {
+    pub source: String,
+    pub rules: Vec<String>,
+    pub reasons: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -34,13 +34,13 @@ impl Deinflector {
         Ok(Self(serde_json::from_str(json)?))
     }
     pub fn deinflect<'a>(&'a self, source: &'a str) -> Vec<DeinflectionResult> {
-        let mut deinflections: Vec<DeinflectionResult<'_>> = vec![];
+        let mut deinflections: Vec<DeinflectionResult> = vec![];
 
         deinflections.extend(StepSearch::new_from_str(source).flat_map(|source| {
             self.deinflect_single(DeinflectionResult(
                 source.to_string(),
                 DeinflectionMeta {
-                    source,
+                    source: source.to_string(),
                     ..Default::default()
                 },
             ))
@@ -52,7 +52,7 @@ impl Deinflector {
         deinflections
     }
 
-    fn deinflect_single<'a>(&'a self, text: DeinflectionResult<'a>) -> Vec<DeinflectionResult<'a>> {
+    fn deinflect_single(&self, text: DeinflectionResult) -> Vec<DeinflectionResult> {
         self.0
             .iter()
             .flat_map(|(reason, rules)| {
@@ -96,9 +96,9 @@ impl Deinflector {
                             self.deinflect_single(DeinflectionResult(
                                 deinf_term,
                                 DeinflectionMeta {
-                                    source: text.1.source,
-                                    rules: rules_out.iter().map(|s| s.as_str()).collect(),
-                                    reasons: vec![reason.as_str()]
+                                    source: text.1.source.to_string(),
+                                    rules: rules_out.iter().map(|s| s.to_string()).collect(),
+                                    reasons: vec![reason.to_string()]
                                         .into_iter()
                                         .chain(reasons.clone())
                                         .collect(),

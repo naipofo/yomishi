@@ -1,6 +1,5 @@
 use crate::{
     anki_connect::{AnkiConnectClient, CanAddNotes, Note},
-    database::Database,
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData, HandlebarsRenderer},
     protos::yomishi::{
@@ -9,34 +8,27 @@ use crate::{
     },
 };
 use futures::future::join_all;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+
 use tonic::{Request, Response, Status};
 
-use super::config::ConfigState;
-
-pub struct ScanService {
-    pub db: Arc<Mutex<Database>>,
-    pub config: Arc<Mutex<ConfigState>>,
-}
+use super::Backend;
 
 #[tonic::async_trait]
-impl scan::scan_server::Scan for ScanService {
+impl scan::scan_server::Scan for Backend {
     async fn scan_string(
         &self,
         request: Request<ScanStringRequest>,
     ) -> Result<Response<ScanStringReply>, Status> {
         let config = &*self.config.lock().await;
+        let anki_connect = config.0.anki_connect.clone().unwrap();
+
         Ok(Response::new(ScanStringReply {
             results: join_all(
-                self.db
-                    .lock()
+                self.with_dict(|dict| dict.search(&request.get_ref().text).unwrap())
                     .await
-                    .search(&request.get_ref().text)
-                    .unwrap()
                     .into_iter()
                     .map(search_to_template_data)
-                    .map(|e| data_to_result(e, &config.0.anki_connect.as_ref().unwrap())),
+                    .map(|e| data_to_result(e, &anki_connect)),
             )
             .await,
         }))

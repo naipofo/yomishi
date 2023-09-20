@@ -25,21 +25,21 @@ pub enum StructuredItem {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(untagged)]
+#[serde(untagged, rename_all = "camelCase")]
 pub enum ItemVariant {
     Image {
         path: String,
         width: Option<i32>,
         height: Option<i32>,
         title: Option<String>,
-        sizeUnits: Option<SizeUnits>,
+        size_units: Option<SizeUnits>,
     },
     Link {
         href: String,
     },
     TableElement {
-        colSpan: Option<i64>,
-        rowSpan: Option<i64>,
+        col_span: Option<i64>,
+        row_span: Option<i64>,
     },
 }
 
