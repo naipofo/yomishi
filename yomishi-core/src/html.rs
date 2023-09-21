@@ -1,11 +1,11 @@
 use crate::{
-    database::{DictionaryTagged, SearchResult, TermWithTags},
     dict::parser::{
         structured::{ItemData, StructuredContent, StructuredItem},
         tag::Tag,
         term::{GlossaryDetailed, GlossaryEntry},
         term_meta::TermMeta,
     },
+    dictionary::search::{DictionaryTagged, SearchResult, TermWithTags},
     japanese::ruby::{try_from_reading, Segment},
 };
 

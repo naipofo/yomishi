@@ -14,7 +14,7 @@ pub struct Dictionary {
 impl Dictionary {
     pub fn new() -> Result<Self> {
         Ok(Self {
-            storage: Database::new(construct_deinflector()?)?,
+            storage: Database::new()?,
             deinflector: construct_deinflector()?,
         })
     }

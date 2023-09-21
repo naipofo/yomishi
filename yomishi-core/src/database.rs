@@ -5,21 +5,10 @@ mod tags;
 mod terms;
 mod terms_meta;
 
-use std::{
-    collections::{BTreeMap, HashSet},
-    path::Path,
-};
-
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
+use std::path::Path;
 
-use crate::{
-    deinflector::{DeinflectionMeta, DeinflectionResult, Deinflector},
-    dict::{
-        parser::{tag::Tag, term::Term, term_meta::TermMeta},
-        LoadedDict,
-    },
-};
+use crate::dict::LoadedDict;
 
 use self::{
     dictionaries::insert_dictionary, kanjis::insert_kanjis_bulk,
@@ -29,32 +18,10 @@ use self::{
 
 pub struct Database {
     pub conn: Connection,
-    deinflector: Deinflector,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct SearchResult {
-    pub deinflection: DeinflectionMeta,
-    pub glossaries: Vec<DictionaryTagged<TermWithTags>>,
-    pub tags: Vec<Tag>,
-    pub meta: Vec<DictionaryTagged<TermMeta>>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct DictionaryTagged<T> {
-    pub dictionary: String,
-    #[serde(flatten)]
-    pub data: T,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct TermWithTags {
-    pub term: Term,
-    pub tags: Vec<Tag>,
 }
 
 impl Database {
-    pub fn new(deinflector: Deinflector) -> rusqlite::Result<Self> {
+    pub fn new() -> rusqlite::Result<Self> {
         let conn = Connection::open(Path::new("./db.sqlite3"))?;
 
         conn.execute_batch(concat!(
@@ -63,7 +30,7 @@ impl Database {
             include_str!("database/index.sql")
         ))?;
 
-        Ok(Self { conn, deinflector })
+        Ok(Self { conn })
     }
 
     pub fn load(&mut self, dictionary: LoadedDict) -> rusqlite::Result<()> {
@@ -86,74 +53,5 @@ impl Database {
         insert_tags_bulk(&tx, tag, dictionary_id)?;
 
         tx.commit()
-    }
-
-    pub fn search(&mut self, text: &str) -> rusqlite::Result<Vec<SearchResult>> {
-        self.deinflector
-            .deinflect(text)
-            .into_iter()
-            .map(|DeinflectionResult(term, meta)| {
-                struct LookupResult(Term, Vec<Tag>, Vec<Tag>, String);
-
-                #[derive(PartialEq, Eq, PartialOrd, Ord)]
-                struct DedupKey(String, String);
-
-                fn group_pairs(v: Vec<LookupResult>) -> BTreeMap<DedupKey, Vec<LookupResult>> {
-                    v.into_iter().fold(BTreeMap::new(), |mut acc, el| {
-                        acc.entry(DedupKey(
-                            el.0.expression.to_string(),
-                            el.0.reading.to_string(),
-                        ))
-                        .or_default()
-                        .push(el);
-                        acc
-                    })
-                }
-
-                let terms_r = self
-                    .get_terms(&term)?
-                    .into_iter()
-                    .map(|(term, dict_id)| {
-                        let tags = self.get_tag_list(&term.definition_tags, &dict_id)?;
-                        let term_tags = self.get_tag_list(&term.term_tags, &dict_id)?;
-
-                        Ok(LookupResult(
-                            term,
-                            tags,
-                            term_tags,
-                            self.get_dict_by_id(&dict_id)?,
-                        ))
-                    })
-                    .collect::<rusqlite::Result<_>>()?;
-
-                let terms_grouped = group_pairs(terms_r);
-
-                terms_grouped
-                    .into_iter()
-                    .map(|(_, e)| {
-                        let mut all_tags = HashSet::new();
-
-                        let t = &e.get(0).unwrap().0;
-                        let term_meta = self.get_term_meta(&t.expression, &t.reading)?;
-                        Ok(SearchResult {
-                            deinflection: meta.clone(),
-                            glossaries: e
-                                .into_iter()
-                                .map(|LookupResult(term, tags, global, dictionary)| {
-                                    all_tags.extend(global.into_iter());
-                                    DictionaryTagged {
-                                        data: TermWithTags { term, tags },
-                                        dictionary,
-                                    }
-                                })
-                                .collect::<Vec<_>>(),
-                            tags: all_tags.into_iter().collect(),
-                            meta: term_meta,
-                        })
-                    })
-                    .collect::<rusqlite::Result<Vec<_>>>()
-            })
-            .collect::<rusqlite::Result<Vec<_>>>()
-            .map(|e| e.into_iter().flatten().collect())
     }
 }

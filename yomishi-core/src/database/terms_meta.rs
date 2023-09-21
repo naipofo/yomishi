@@ -1,8 +1,8 @@
 use rusqlite::{params, Connection};
 
-use crate::dict::parser::term_meta::TermMeta;
+use crate::{dict::parser::term_meta::TermMeta, dictionary::search::DictionaryTagged};
 
-use super::{Database, DictionaryTagged};
+use super::Database;
 
 pub fn insert_terms_meta_bulk(
     conn: &Connection,
