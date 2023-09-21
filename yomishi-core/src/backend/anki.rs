@@ -1,9 +1,9 @@
 use crate::{
-    anki_connect::{AddNote, AnkiConnectClient, Note},
+    anki_connect::{AddNote, AnkiConnectClient, Note, NotesQuery},
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData},
     protos::yomishi::{
-        anki::{self, SaveDefinitionReply, SaveDefinitionRequest},
+        anki::{self, OpenCardReply, OpenCardRequest, SaveDefinitionReply, SaveDefinitionRequest},
         config::AnkiConnectConfig,
     },
 };
@@ -31,6 +31,22 @@ impl anki::anki_server::Anki for Backend {
         add_to_anki(&data, &config.0.anki_connect.as_ref().unwrap()).await;
 
         Ok(Response::new(SaveDefinitionReply {}))
+    }
+
+    async fn open_card(
+        &self,
+        request: Request<OpenCardRequest>,
+    ) -> Result<Response<OpenCardReply>, Status> {
+        let config = &*self.config.lock().await;
+        let client = AnkiConnectClient::new(&config.0.anki_connect.as_ref().unwrap().addrees);
+
+        client
+            .gui_browse(&NotesQuery {
+                query: &format!("cid:{}", request.get_ref().c_id),
+            })
+            .await;
+
+        Ok(Response::new(OpenCardReply {}))
     }
 }
 

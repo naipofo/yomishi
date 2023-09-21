@@ -12,15 +12,22 @@
     $: reversed = message.data.results.reverse();
     $: message, (justAdded = []);
 
+    const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
+    const client = createPromiseClient(Anki, transport);
+
     function addToAnki(index: number) {
         justAdded = [...justAdded, index];
 
-        const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
-        const client = createPromiseClient(Anki, transport);
         client.saveDefinition({
             scanned: message.scanString,
             index: reversed.length - index - 1,
             // And then remove this
+        });
+    }
+
+    function viewInAnki(cid: bigint | undefined) {
+        client.openCard({
+            cId: cid,
         });
     }
 </script>
@@ -28,6 +35,9 @@
 {#each reversed as result, i}
     <article>
         <div class="buttons">
+            {#if result.cardId != undefined}
+                <button on:click={() => viewInAnki(result.cardId)}>card</button>
+            {/if}
             <button
                 on:click={() => addToAnki(i)}
                 disabled={!result.ankiCanAdd || justAdded.indexOf(i) !== -1}

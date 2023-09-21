@@ -1,5 +1,5 @@
 use crate::{
-    anki_connect::{AnkiConnectClient, CanAddNotes, Note},
+    anki_connect::{AnkiConnectClient, CanAddNotes, Note, NotesQuery},
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData, HandlebarsRenderer},
     protos::yomishi::{
@@ -55,6 +55,14 @@ async fn data_to_result(data: GlossaryTemplateData, config: &AnkiConnectConfig) 
             })
             .await)
             .remove(0),
-        card_id: None,
+        card_id: client
+            .find_notes(&NotesQuery {
+                query: &format!(
+                    "Expression:{}",
+                    data.glossaries.get(0).unwrap().data.term.expression
+                ),
+            })
+            .await
+            .pop(),
     }
 }

@@ -59,10 +59,11 @@ r!(deck_names, "deckNames", Vec<String>);
 r!(model_names, "modelNames", Vec<String>);
 
 #[derive(Serialize)]
-pub struct FindNotes<'a> {
+pub struct NotesQuery<'a> {
     pub query: &'a str,
 }
-r!(find_notes, "findNotes", FindNotes<'_>, Vec<i64>);
+r!(find_notes, "findNotes", NotesQuery<'_>, Vec<i64>);
+r!(gui_browse, "guiBrowse", NotesQuery<'_>, Vec<i64>);
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

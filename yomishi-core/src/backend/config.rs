@@ -39,7 +39,7 @@ pub fn default_config() -> Config {
             deck_name: "test1".to_string(),
             model_name: "Novelcards".to_string(),
             fields: vec![
-                ("Word".to_string(), "ruby-plain".to_string()),
+                ("Expression".to_string(), "ruby-plain".to_string()),
                 ("Glossary".to_string(), "glossary-list".to_string()),
             ]
             .into_iter()
