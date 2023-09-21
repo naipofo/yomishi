@@ -1,3 +1,5 @@
+pub mod actions;
+
 use std::collections::HashMap;
 
 use reqwest::Client;
@@ -9,21 +11,9 @@ pub struct AnkiConnectClient<'a> {
     client: Client,
 }
 
-macro_rules! r {
-    ($name:ident, $action:expr, $o:ty) => {
-        impl AnkiConnectClient<'_> {
-            pub async fn $name(&self) -> $o {
-                self.invoke($action, serde_json::json!({})).await.unwrap()
-            }
-        }
-    };
-    ($name:ident, $action:expr, $i:ty, $o:ty) => {
-        impl AnkiConnectClient<'_> {
-            pub async fn $name(&self, e: &$i) -> $o {
-                self.invoke($action, e).await.unwrap()
-            }
-        }
-    };
+pub trait ConnectAction: Serialize {
+    type Output: DeserializeOwned;
+    fn action() -> &'static str;
 }
 
 impl AnkiConnectClient<'_> {
@@ -34,17 +24,13 @@ impl AnkiConnectClient<'_> {
         }
     }
 
-    async fn invoke<I: Serialize, O: DeserializeOwned>(
-        &self,
-        action: &str,
-        params: I,
-    ) -> reqwest::Result<O> {
+    pub async fn invoke<T: ConnectAction>(&self, params: &T) -> reqwest::Result<T::Output> {
         let mut result = self
             .client
             .post(self.address)
             .json(&serde_json::json!({
                 "version": 6,
-                "action": action,
+                "action": T::action(),
                 "params": params,
             }))
             .send()
@@ -54,45 +40,3 @@ impl AnkiConnectClient<'_> {
         Ok(serde_json::from_value(result.remove("result").unwrap()).unwrap())
     }
 }
-
-r!(deck_names, "deckNames", Vec<String>);
-r!(model_names, "modelNames", Vec<String>);
-
-#[derive(Serialize)]
-pub struct NotesQuery<'a> {
-    pub query: &'a str,
-}
-r!(find_notes, "findNotes", NotesQuery<'_>, Vec<i64>);
-r!(gui_browse, "guiBrowse", NotesQuery<'_>, Vec<i64>);
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ModelNames<'a> {
-    pub model_name: &'a str,
-}
-r!(
-    model_field_names,
-    "modelFieldNames",
-    ModelNames<'_>,
-    Vec<String>
-);
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Note<'a> {
-    pub deck_name: &'a str,
-    pub model_name: &'a str,
-    pub fields: &'a HashMap<&'a str, &'a str>,
-}
-
-#[derive(Serialize)]
-pub struct AddNote<'a> {
-    pub note: &'a Note<'a>,
-}
-r!(add_note, "addNote", AddNote<'_>, i64);
-
-#[derive(Serialize)]
-pub struct CanAddNotes<'a> {
-    pub notes: &'a Vec<&'a Note<'a>>,
-}
-r!(can_add_notes, "canAddNotes", CanAddNotes<'_>, Vec<bool>);

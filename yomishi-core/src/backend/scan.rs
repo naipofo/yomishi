@@ -1,5 +1,9 @@
 use crate::{
-    anki_connect::{AnkiConnectClient, CanAddNotes, Note, NotesQuery},
+    anki_connect::{
+        actions::{CanAddNotes, FindNotes, Note},
+        AnkiConnectClient,
+    },
+    error::Result,
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData, HandlebarsRenderer},
     protos::yomishi::{
@@ -30,12 +34,18 @@ impl scan::scan_server::Scan for Backend {
                     .map(search_to_template_data)
                     .map(|e| data_to_result(e, &anki_connect)),
             )
-            .await,
+            .await
+            .into_iter()
+            .collect::<Result<_>>()
+            .unwrap(),
         }))
     }
 }
 
-async fn data_to_result(data: GlossaryTemplateData, config: &AnkiConnectConfig) -> ScanResult {
+async fn data_to_result(
+    data: GlossaryTemplateData,
+    config: &AnkiConnectConfig,
+) -> Result<ScanResult> {
     let content = HandlebarsRenderer::new().render_glossary(&data);
 
     let client = AnkiConnectClient::new(&config.addrees);
@@ -47,22 +57,28 @@ async fn data_to_result(data: GlossaryTemplateData, config: &AnkiConnectConfig) 
         fields: &fields.iter().map(|(a, b)| (*a, b.trim())).collect(),
     };
 
-    ScanResult {
-        content,
-        anki_can_add: (&mut client
-            .can_add_notes(&CanAddNotes {
-                notes: &vec![&note_model],
-            })
-            .await)
-            .remove(0),
-        card_id: client
-            .find_notes(&NotesQuery {
+    let anki_can_add = client
+        .invoke(&CanAddNotes {
+            notes: &vec![&note_model],
+        })
+        .await?
+        .remove(0);
+
+    let card_id = Some(
+        client
+            .invoke(&FindNotes {
                 query: &format!(
                     "Expression:{}",
                     data.glossaries.get(0).unwrap().data.term.expression
                 ),
             })
-            .await
-            .pop(),
-    }
+            .await?
+            .remove(0),
+    );
+
+    Ok(ScanResult {
+        content,
+        anki_can_add,
+        card_id,
+    })
 }

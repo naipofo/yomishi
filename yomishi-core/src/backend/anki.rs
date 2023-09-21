@@ -1,5 +1,8 @@
 use crate::{
-    anki_connect::{AddNote, AnkiConnectClient, Note, NotesQuery},
+    anki_connect::{
+        actions::{AddNote, GuiBrowse, Note},
+        AnkiConnectClient,
+    },
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData},
     protos::yomishi::{
@@ -41,10 +44,11 @@ impl anki::anki_server::Anki for Backend {
         let client = AnkiConnectClient::new(&config.0.anki_connect.as_ref().unwrap().addrees);
 
         client
-            .gui_browse(&NotesQuery {
+            .invoke(&GuiBrowse {
                 query: &format!("cid:{}", request.get_ref().c_id),
             })
-            .await;
+            .await
+            .unwrap();
 
         Ok(Response::new(OpenCardReply {}))
     }
@@ -59,5 +63,5 @@ async fn add_to_anki(data: &GlossaryTemplateData, config: &AnkiConnectConfig) {
         fields: &fields.iter().map(|(a, b)| (*a, b.trim())).collect(),
     };
 
-    client.add_note(&AddNote { note: &note_model }).await;
+    client.invoke(&AddNote { note: &note_model }).await.unwrap();
 }
