@@ -1,3 +1,4 @@
+pub mod config;
 mod dictionaries;
 mod kanjis;
 mod kanjis_meta;

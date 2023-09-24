@@ -7,7 +7,7 @@ use crate::{
     html::{search_to_template_data, GlossaryTemplateData},
     protos::yomishi::{
         anki::{self, OpenCardReply, OpenCardRequest, SaveDefinitionReply, SaveDefinitionRequest},
-        config::AnkiConnectConfig,
+        config::Config,
     },
 };
 use tonic::{Request, Response, Status};
@@ -20,6 +20,10 @@ impl anki::anki_server::Anki for Backend {
         &self,
         request: Request<SaveDefinitionRequest>,
     ) -> Result<Response<SaveDefinitionReply>, Status> {
+        let config = self
+            .with_dict(|dict| dict.storage.get_config())
+            .await
+            .unwrap();
         let SaveDefinitionRequest { scanned, index } = &request.get_ref();
         let data = search_to_template_data(
             self.db
@@ -29,9 +33,8 @@ impl anki::anki_server::Anki for Backend {
                 .unwrap()
                 .remove(*index as usize),
         );
-        let config = &*self.config.lock().await;
 
-        add_to_anki(&data, &config.0.anki_connect.as_ref().unwrap()).await;
+        add_to_anki(&data, &config).await;
 
         Ok(Response::new(SaveDefinitionReply {}))
     }
@@ -40,8 +43,10 @@ impl anki::anki_server::Anki for Backend {
         &self,
         request: Request<OpenCardRequest>,
     ) -> Result<Response<OpenCardReply>, Status> {
-        let config = &*self.config.lock().await;
-        let client = AnkiConnectClient::new(&config.0.anki_connect.as_ref().unwrap().addrees);
+        let config = self
+            .with_dict(|dict| dict.storage.get_config().unwrap())
+            .await;
+        let client = AnkiConnectClient::new(&config.anki_connect_addrees);
 
         client
             .invoke(&GuiBrowse {
@@ -54,12 +59,12 @@ impl anki::anki_server::Anki for Backend {
     }
 }
 
-async fn add_to_anki(data: &GlossaryTemplateData, config: &AnkiConnectConfig) {
-    let client = AnkiConnectClient::new(&config.addrees);
-    let fields = build_fields(data, &config.fields);
+async fn add_to_anki(data: &GlossaryTemplateData, config: &Config) {
+    let client = AnkiConnectClient::new(&config.anki_connect_addrees);
+    let fields = build_fields(data, &config.anki_fields);
     let note_model = Note {
-        deck_name: &config.deck_name,
-        model_name: &config.model_name,
+        deck_name: &config.anki_deck_name,
+        model_name: &config.anki_model_name,
         fields: &fields.iter().map(|(a, b)| (*a, b.trim())).collect(),
     };
 

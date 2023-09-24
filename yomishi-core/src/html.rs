@@ -113,7 +113,8 @@ fn render_structured(
 fn render_item(writer: &mut Writer<Cursor<Vec<u8>>>, i: StructuredItem) -> quick_xml::Result<()> {
     match i {
         StructuredItem::Text(t) => text(writer, &t)?,
-        StructuredItem::Object { tag, data, variant } => {
+        StructuredItem::Object { tag, data, .. } => {
+            // TODO: variants
             let mut element: BytesStart<'_> = BytesStart::new(&tag);
             let ItemData {
                 content,

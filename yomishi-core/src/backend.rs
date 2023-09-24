@@ -2,19 +2,14 @@ use std::{ops::DerefMut, path::Path};
 
 use tokio::sync::Mutex;
 
-use crate::{dictionary::Dictionary, protos::yomishi::config::Config};
-
-use self::config::default_config;
+use crate::dictionary::Dictionary;
 
 pub mod anki;
 pub mod config;
 pub mod scan;
 
-struct ConfigState(pub Config);
-
 pub struct Backend {
     db: Mutex<Dictionary>,
-    config: Mutex<ConfigState>,
 }
 
 impl Backend {
@@ -26,7 +21,6 @@ impl Backend {
 
         Self {
             db: Mutex::new(dict),
-            config: Mutex::new(ConfigState(default_config())),
         }
     }
 

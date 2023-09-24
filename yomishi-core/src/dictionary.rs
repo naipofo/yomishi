@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub struct Dictionary {
-    storage: Database,
+    pub storage: Database,
     deinflector: Deinflector,
 }
 

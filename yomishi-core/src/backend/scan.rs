@@ -7,7 +7,7 @@ use crate::{
     flashcard::build_fields,
     html::{search_to_template_data, GlossaryTemplateData, HandlebarsRenderer},
     protos::yomishi::{
-        config::AnkiConnectConfig,
+        config::Config,
         scan::{self, ScanResult, ScanStringReply, ScanStringRequest},
     },
 };
@@ -23,8 +23,10 @@ impl scan::scan_server::Scan for Backend {
         &self,
         request: Request<ScanStringRequest>,
     ) -> Result<Response<ScanStringReply>, Status> {
-        let config = &*self.config.lock().await;
-        let anki_connect = config.0.anki_connect.clone().unwrap();
+        let config = self
+            .with_dict(|dict| dict.storage.get_config())
+            .await
+            .unwrap();
 
         Ok(Response::new(ScanStringReply {
             results: join_all(
@@ -32,7 +34,7 @@ impl scan::scan_server::Scan for Backend {
                     .await
                     .into_iter()
                     .map(search_to_template_data)
-                    .map(|e| data_to_result(e, &anki_connect)),
+                    .map(|e| data_to_result(e, &config)),
             )
             .await
             .into_iter()
@@ -42,18 +44,15 @@ impl scan::scan_server::Scan for Backend {
     }
 }
 
-async fn data_to_result(
-    data: GlossaryTemplateData,
-    config: &AnkiConnectConfig,
-) -> Result<ScanResult> {
+async fn data_to_result(data: GlossaryTemplateData, config: &Config) -> Result<ScanResult> {
     let content = HandlebarsRenderer::new().render_glossary(&data);
 
-    let client = AnkiConnectClient::new(&config.addrees);
+    let client = AnkiConnectClient::new(&config.anki_connect_addrees);
 
-    let fields = build_fields(&data, &config.fields);
+    let fields = build_fields(&data, &config.anki_fields);
     let note_model = Note {
-        deck_name: &config.deck_name,
-        model_name: &config.model_name,
+        deck_name: &config.anki_deck_name,
+        model_name: &config.anki_model_name,
         fields: &fields.iter().map(|(a, b)| (*a, b.trim())).collect(),
     };
 

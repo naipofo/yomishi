@@ -4,6 +4,7 @@ package yomishi.anki;
 
 service Anki {
   rpc SaveDefinition(SaveDefinitionRequest) returns (SaveDefinitionReply) {}
+  rpc OpenCard(OpenCardRequest) returns (OpenCardReply) {}
 }
 
 message SaveDefinitionRequest {
@@ -13,3 +14,9 @@ message SaveDefinitionRequest {
 }
 
 message SaveDefinitionReply { }
+
+message OpenCardRequest {
+  int64 c_id = 1;
+}
+
+message OpenCardReply { }

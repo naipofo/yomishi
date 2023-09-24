@@ -11,19 +11,22 @@ message FetchConfigRequest { }
 
 message FetchConfigReply { Config config = 1; }
 
-  
 message PushConfigRequest { Config config = 1; }
 
 message PushConfigReply { }
 
+// Figure out something better than a flat map in protos
 message Config {
-  AnkiConnectConfig anki_connect = 1;
-}
+  repeated int64 disabled_dictionaries = 1;
 
-message AnkiConnectConfig {
-  bool enabled = 1;
-  string addrees = 2; 
-  string deck_name = 3;
-  string model_name = 4;
-  map<string, string> fields = 5;
+  int64 popup_width = 2;
+  int64 popup_height = 3;
+  
+  
+  bool anki_enabled = 4;
+  string anki_connect_addrees = 5; 
+  string anki_deck_name = 6;
+  string anki_model_name = 7;
+  string anki_tag = 8;
+  map<string, string> anki_fields = 9;
 }

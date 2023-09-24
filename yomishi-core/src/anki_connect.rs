@@ -25,13 +25,19 @@ impl AnkiConnectClient<'_> {
     }
 
     pub async fn invoke<T: ConnectAction>(&self, params: &T) -> reqwest::Result<T::Output> {
+        self.invoke_any(params, T::action())
+            .await
+            .map(|e| serde_json::from_value(e).unwrap())
+    }
+
+    pub async fn invoke_any<T: Serialize>(&self, data: &T, action: &str) -> reqwest::Result<Value> {
         let mut result = self
             .client
             .post(self.address)
             .json(&serde_json::json!({
                 "version": 6,
-                "action": T::action(),
-                "params": params,
+                "action":action,
+                "params": data,
             }))
             .send()
             .await?
