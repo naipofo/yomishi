@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::{ConfigEntry, ConfigType};
+use crate::{ConfigData, ConfigEntry, ConfigType};
 
 #[derive(Debug, Deserialize)]
 struct TypedEntry {
@@ -11,7 +11,7 @@ struct TypedEntry {
     entry: ConfigEntry,
 }
 
-pub fn load_toml(toml_def: &str) -> Result<HashMap<ConfigType, Vec<ConfigEntry>>, toml::de::Error> {
+pub fn load_toml(toml_def: &str) -> Result<ConfigData, toml::de::Error> {
     let data: HashMap<String, HashMap<String, TypedEntry>> = toml::from_str(toml_def)?;
     let mut new_map = HashMap::new();
 
