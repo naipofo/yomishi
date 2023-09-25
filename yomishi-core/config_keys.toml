@@ -1,0 +1,35 @@
+[Dictionaries.Disabled]
+type = "Serde"
+default = "[]"
+
+[Popup.Width]
+type = "Integer"
+default = "600"
+
+[Popup.Height]
+type = "Integer"
+default = "300"
+
+[Anki.Enabled]
+type = "Boolean"
+default = "true"
+
+[Anki.ConnectAddress]
+type = "String"
+default = "http://127.0.0.1:8765"
+
+[Anki.DeckName]
+type = "String"
+default = "test1"
+
+[Anki.ModelName]
+type = "String"
+default = "Novelcards"
+
+[Anki.Tag]
+type = "String"
+default = "yomishi"
+
+[Anki.Fields]
+type = "Serde"
+default = "{}"
