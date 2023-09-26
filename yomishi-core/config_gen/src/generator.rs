@@ -18,7 +18,7 @@ pub fn generate_source(data: ConfigData) -> String {
         buf.push_str("}\n");
 
         buf.push_str(&format!(
-            "impl {enum_name}{{\nfn default_value(&self) ->{}{{match self {{",
+            "impl {enum_name}{{\npub fn default_value(&self) ->{}{{match self {{",
             config_type.return_type(),
         ));
         for key in &entries {
@@ -38,7 +38,7 @@ pub fn generate_source(data: ConfigData) -> String {
 impl ConfigType {
     fn return_type(&self) -> &'static str {
         match self {
-            ConfigType::String => "&'static str",
+            ConfigType::String => "String",
             ConfigType::Boolean => "bool",
             ConfigType::Integer => "i64",
             ConfigType::Serde => "serde_json::Value",
@@ -47,7 +47,7 @@ impl ConfigType {
 
     fn value_build(&self, value: &str) -> String {
         match self {
-            ConfigType::String => format!("\"{}\"", value),
+            ConfigType::String => format!("\"{}\".to_string()", value),
             ConfigType::Boolean => value.to_string(),
             ConfigType::Integer => format!("{}i64", value),
             ConfigType::Serde => format!("serde_json::json!({})", value),
