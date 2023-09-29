@@ -8,11 +8,11 @@ pub enum Segment {
 }
 
 fn is_kanji(c: char) -> bool {
-    c >= '\u{3000}' && c <= '\u{303F}' || c >= '\u{4E00}' && c <= '\u{9FEF}'
+    ('\u{3000}'..='\u{303F}').contains(&c) || ('\u{4E00}'..='\u{9FEF}').contains(&c)
 }
 
 fn build_push(pairs: &mut Vec<Segment>, kanji_build: &mut String, kana_build: &mut String) {
-    pairs.push(if kana_build.len() == 0 {
+    pairs.push(if kana_build.is_empty() {
         Segment::Text(kanji_build.clone())
     } else {
         Segment::Ruby(kanji_build.clone(), kana_build.clone())

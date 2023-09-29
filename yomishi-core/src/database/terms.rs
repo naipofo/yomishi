@@ -23,23 +23,20 @@ pub fn insert_terms_bulk(
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )?;
 
-    terms
-        .iter()
-        .map(|t| {
-            prep.insert(params![
-                t.expression,
-                t.reading,
-                serde_json::to_string(&t.definition_tags).unwrap(),
-                t.rules,
-                t.score,
-                serde_json::to_string(&t.glossary).unwrap(),
-                t.sequence,
-                serde_json::to_string(&t.term_tags).unwrap(),
-                dictionary_id
-            ])
-            .map(|_| ())
-        })
-        .collect::<rusqlite::Result<_>>()?;
+    terms.iter().try_for_each(|t| {
+        prep.insert(params![
+            t.expression,
+            t.reading,
+            serde_json::to_string(&t.definition_tags).unwrap(),
+            t.rules,
+            t.score,
+            serde_json::to_string(&t.glossary).unwrap(),
+            t.sequence,
+            serde_json::to_string(&t.term_tags).unwrap(),
+            dictionary_id
+        ])
+        .map(|_| ())
+    })?;
     prep.discard();
     Ok(())
 }

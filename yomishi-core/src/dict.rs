@@ -37,7 +37,6 @@ pub fn import_from_directory<F: FnMut(&DictIndex) -> bool>(
     mut should_import: F,
 ) -> std::io::Result<Vec<LoadedDict>> {
     read_dir(dir_path)?
-        .into_iter()
         .filter_map(|e| {
             let mut zip = zip::ZipArchive::new(File::open(e.unwrap().path()).unwrap()).unwrap();
             let index = get_index(&mut zip).unwrap();
@@ -67,12 +66,12 @@ pub fn get_index(zip: &mut ZipArchive<File>) -> std::io::Result<DictIndex> {
 
 pub fn import_zip(zip: &mut ZipArchive<File>, index: DictIndex) -> std::io::Result<LoadedDict> {
     let names = zip.file_names().map(|e| e.to_string()).collect::<Vec<_>>();
-    let format = index.format.clone();
+    let format = index.format;
 
     macro_rules! t {
         ($n:expr) => {
             import_type(
-                &names.iter().map(|e| e.as_str()).collect(),
+                &names.iter().map(|e| e.as_str()).collect::<Vec<_>>(),
                 zip,
                 Regex::new(concat!($n, r"\_(\d+)\.json")).unwrap(),
                 format,
@@ -91,7 +90,7 @@ pub fn import_zip(zip: &mut ZipArchive<File>, index: DictIndex) -> std::io::Resu
 }
 
 pub fn import_type<T: FromBank>(
-    names: &Vec<&str>,
+    names: &[&str],
     zip: &mut ZipArchive<File>,
     re: Regex,
     format: i64,

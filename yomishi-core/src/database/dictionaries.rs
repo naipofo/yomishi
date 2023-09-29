@@ -10,7 +10,7 @@ pub fn insert_dictionary(conn: &Connection, index: &DictIndex) -> rusqlite::Resu
             title,
             revision
         ) VALUES (?, ?)",
-        index_to_touple(&index),
+        index_to_touple(index),
     )?;
     Ok(conn.last_insert_rowid())
 }
@@ -24,7 +24,7 @@ impl Database {
         Ok(self
             .conn
             .prepare("SELECT EXISTS(SELECT 1 FROM dictionaries WHERE title = ? AND revision = ?)")?
-            .query_row(index_to_touple(&index), |r| r.get::<_, i64>(0))?
+            .query_row(index_to_touple(index), |r| r.get::<_, i64>(0))?
             == 1)
     }
 

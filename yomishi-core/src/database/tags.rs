@@ -20,20 +20,17 @@ pub fn insert_tags_bulk(
         ) VALUES (?, ?, ?, ?, ?, ?)",
     )?;
 
-    terms
-        .iter()
-        .map(|t| {
-            prep.insert(params![
-                t.name,
-                t.category,
-                t.sorting,
-                t.notes,
-                t.popularity,
-                dictionary_id
-            ])
-            .map(|_| ())
-        })
-        .collect::<rusqlite::Result<_>>()?;
+    terms.iter().try_for_each(|t| {
+        prep.insert(params![
+            t.name,
+            t.category,
+            t.sorting,
+            t.notes,
+            t.popularity,
+            dictionary_id
+        ])
+        .map(|_| ())
+    })?;
     prep.discard();
     Ok(())
 }
@@ -61,7 +58,7 @@ impl Database {
                 })
             })
     }
-    pub fn get_tag_list(&self, names: &Vec<String>, dict_id: &i64) -> rusqlite::Result<Vec<Tag>> {
+    pub fn get_tag_list(&self, names: &[String], dict_id: &i64) -> rusqlite::Result<Vec<Tag>> {
         names.iter().map(|e| self.get_tag(e, dict_id)).collect()
     }
 }

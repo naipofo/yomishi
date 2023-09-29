@@ -3,9 +3,10 @@ use std::collections::{BTreeMap, HashSet};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    backend::Backend,
     deinflector::{DeinflectionMeta, DeinflectionResult},
     dict::parser::{tag::Tag, term::Term, term_meta::TermMeta},
-    error::{Result, YomishiError}, backend::Backend,
+    error::{Result, YomishiError},
 };
 
 #[derive(Deserialize, Serialize)]

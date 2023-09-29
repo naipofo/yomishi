@@ -67,7 +67,7 @@ fn render_entry(entry: GlossaryEntry) -> String {
 }
 
 fn render_pure_text(text: &str) -> String {
-    text.split("\n").collect::<Vec<_>>().join("<br>")
+    text.split('\n').collect::<Vec<_>>().join("<br>")
 }
 
 pub fn render_glossary_old(glossary: GlossaryEntry) -> quick_xml::Result<(String, Vec<String>)> {
@@ -105,7 +105,7 @@ fn render_structured(
 ) -> quick_xml::Result<()> {
     match c {
         StructuredContent::Text(t) => text(writer, &t),
-        StructuredContent::Multiple(m) => m.into_iter().map(|e| render_item(writer, e)).collect(),
+        StructuredContent::Multiple(m) => m.into_iter().try_for_each(|e| render_item(writer, e)),
         StructuredContent::Content(c) => render_item(writer, *c),
     }
 }
@@ -144,7 +144,7 @@ fn render_item(writer: &mut Writer<Cursor<Vec<u8>>>, i: StructuredItem) -> quick
 }
 
 fn text(writer: &mut Writer<Cursor<Vec<u8>>>, text: &str) -> quick_xml::Result<()> {
-    let s = text.split("\n").collect::<Vec<_>>();
+    let s = text.split('\n').collect::<Vec<_>>();
     for (i, l) in s.iter().enumerate() {
         writer.write_event(Event::Text(BytesText::new(l)))?;
         if i != s.len() - 1 {

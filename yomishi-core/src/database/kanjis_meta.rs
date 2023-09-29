@@ -15,17 +15,14 @@ pub fn insert_kanjis_meta_bulk(
         ) VALUES (?, ?, ?)",
     )?;
 
-    terms
-        .iter()
-        .map(|t| {
-            prep.insert(params![
-                t.kanji,
-                serde_json::to_string(&t.value).unwrap(),
-                dictionary_id
-            ])
-            .map(|_| ())
-        })
-        .collect::<rusqlite::Result<_>>()?;
+    terms.iter().try_for_each(|t| {
+        prep.insert(params![
+            t.kanji,
+            serde_json::to_string(&t.value).unwrap(),
+            dictionary_id
+        ])
+        .map(|_| ())
+    })?;
     prep.discard();
     Ok(())
 }

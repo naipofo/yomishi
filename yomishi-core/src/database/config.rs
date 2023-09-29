@@ -1,5 +1,3 @@
-use prost::Message;
-use rusqlite::params;
 use serde_json::Value;
 use yomishi_config::{BooleanKeys, IntegerKeys, StringKeys};
 
@@ -43,7 +41,7 @@ macro_rules! config_impl {
                     .unwrap_or(key.default_value())
             }
             pub fn $set(&self, key: $keys, value: $r_type) -> Result<()> {
-                Ok(self.set_serde((&key).into(), &serde_json::to_string(&value)?)?)
+                self.set_serde((&key).into(), &serde_json::to_string(&value)?)
             }
         }
     };

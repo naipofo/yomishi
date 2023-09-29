@@ -40,7 +40,7 @@ fn convert(mut v: VecDeque<Value>) -> serde_json::Result<TermMeta> {
                 entry: TermMetaEntry::Frequency(Some(s), None),
             },
             Value::Object(o) => TermMeta {
-                term: term,
+                term,
                 reading: o
                     .get("reading")
                     .and_then(|e| e.as_str().map(|e| e.to_string())),
@@ -58,7 +58,7 @@ fn freq_from_object(map: &Map<String, Value>) -> TermMetaEntry {
             .and_then(|e| e.as_str().map(|e| e.to_string())),
         vec![map.get("frequency"), map.get("value")]
             .into_iter()
-            .flat_map(|e| e)
+            .flatten()
             .find_map(|e| e.as_i64()),
     )
 }

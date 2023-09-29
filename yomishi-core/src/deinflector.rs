@@ -72,11 +72,11 @@ impl Deinflector {
                             },
                         ) = &text;
 
-                        if rules.len() != 0 && &rules != &rules_in
+                        if !rules.is_empty() && rules != rules_in
                             || !term.ends_with(kana_in)
                             || (term.char_indices().count() - kana_in.char_indices().count()
                                 + kana_out.char_indices().count())
-                                <= 0
+                                == 0
                         {
                             vec![]
                         } else {

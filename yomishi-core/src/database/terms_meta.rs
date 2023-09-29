@@ -18,18 +18,15 @@ pub fn insert_terms_meta_bulk(
         ) VALUES (?, ?, ?, ?)",
     )?;
 
-    terms
-        .iter()
-        .map(|t| {
-            prep.insert(params![
-                t.term,
-                t.reading,
-                serde_json::to_string(&t.entry).unwrap(),
-                dictionary_id
-            ])
-            .map(|_| ())
-        })
-        .collect::<rusqlite::Result<_>>()?;
+    terms.iter().try_for_each(|t| {
+        prep.insert(params![
+            t.term,
+            t.reading,
+            serde_json::to_string(&t.entry).unwrap(),
+            dictionary_id
+        ])
+        .map(|_| ())
+    })?;
     prep.discard();
     Ok(())
 }

@@ -73,7 +73,7 @@ fn convert_v1(mut v: VecDeque<Value>) -> serde_json::Result<Term> {
 }
 
 fn fill_reading(t: Term) -> Term {
-    if t.reading.len() > 0 {
+    if !t.reading.is_empty() {
         t
     } else {
         Term {
