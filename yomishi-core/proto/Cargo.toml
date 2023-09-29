@@ -1,0 +1,13 @@
+[package]
+name = "yomishi_proto"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+prost = "0.12.1"
+
+[build-dependencies]
+prost-build = "0.12.1"
+yomishi_proto_gen.workspace = true

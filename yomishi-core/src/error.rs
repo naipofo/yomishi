@@ -1,13 +1,13 @@
-use tonic::{Code, Status};
-
 pub type Result<T, E = YomishiError> = std::result::Result<T, E>;
 
+// TODO: use something for error messages
 #[derive(Debug)]
 pub enum YomishiError {
     Database,
     Json,
     Request,
     Decode,
+    IOError
 }
 
 impl From<serde_json::Error> for YomishiError {
@@ -34,8 +34,8 @@ impl From<prost::DecodeError> for YomishiError {
     }
 }
 
-impl Into<Status> for YomishiError {
-    fn into(self) -> Status {
-        Status::new(Code::Internal, format!("{:?}", self))
+impl From<std::io::Error> for YomishiError {
+    fn from(_: std::io::Error) -> Self {
+        YomishiError::IOError
     }
 }

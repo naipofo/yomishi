@@ -5,10 +5,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     deinflector::{DeinflectionMeta, DeinflectionResult},
     dict::parser::{tag::Tag, term::Term, term_meta::TermMeta},
-    error::{Result, YomishiError},
+    error::{Result, YomishiError}, backend::Backend,
 };
-
-use super::Dictionary;
 
 #[derive(Deserialize, Serialize)]
 pub struct SearchResult {
@@ -31,8 +29,8 @@ pub struct TermWithTags {
     pub tags: Vec<Tag>,
 }
 
-impl Dictionary {
-    pub fn search(&mut self, text: &str) -> Result<Vec<SearchResult>> {
+impl Backend {
+    pub fn search(&self, text: &str) -> Result<Vec<SearchResult>> {
         self.deinflector
             .deinflect(text)
             .into_iter()
@@ -53,8 +51,7 @@ impl Dictionary {
                             .push(el);
                             acc
                         })
-                        .into_iter()
-                        .map(|(_, e)| e)
+                        .into_values()
                         .collect()
                 }
 
@@ -89,7 +86,7 @@ impl Dictionary {
                             glossaries: e
                                 .into_iter()
                                 .map(|LookupResult(term, tags, global, dictionary)| {
-                                    all_tags.extend(global.into_iter());
+                                    all_tags.extend(global);
                                     DictionaryTagged {
                                         data: TermWithTags { term, tags },
                                         dictionary,

@@ -1,7 +1,4 @@
 <script lang="ts">
-    import { createPromiseClient } from "@bufbuild/connect";
-    import { createGrpcWebTransport } from "@bufbuild/connect-web";
-    import { Anki } from "@yomishi-proto/anki_connect";
     import { ScanMessage } from "../extension/content-script/frames";
 
     export let message: ScanMessage;
@@ -12,23 +9,13 @@
     $: reversed = message.data.results.reverse();
     $: message, (justAdded = []);
 
-    const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
-    const client = createPromiseClient(Anki, transport);
-
     function addToAnki(index: number) {
+        // TODO: Anki integration
         justAdded = [...justAdded, index];
-
-        client.saveDefinition({
-            scanned: message.scanString,
-            index: reversed.length - index - 1,
-            // And then remove this
-        });
     }
 
     function viewInAnki(cid: bigint | undefined) {
-        client.openCard({
-            cId: cid,
-        });
+        // TODO: Anki integration
     }
 </script>
 

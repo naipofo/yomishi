@@ -5,8 +5,7 @@ use crate::{
         term::{GlossaryDetailed, GlossaryEntry},
         term_meta::TermMeta,
     },
-    dictionary::search::{DictionaryTagged, SearchResult, TermWithTags},
-    japanese::ruby::{try_from_reading, Segment},
+    japanese::ruby::{try_from_reading, Segment}, scan::search::{DictionaryTagged, TermWithTags, SearchResult},
 };
 
 use handlebars::{handlebars_helper, Handlebars};
@@ -18,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::io::Cursor;
 
+// TODO: rework this messy struct?
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GlossaryTemplateData {
     pub ruby: Vec<Segment>,

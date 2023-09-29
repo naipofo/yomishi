@@ -1,6 +1,17 @@
 [workspace]
-members = ["yomishi-core", "yomishi-core/config_gen", "yomishi-core/config"]
+members = [
+  "yomishi-core",
+  "yomishi-core/config_gen",
+  "yomishi-core/config",
+  "yomishi-core/proto_gen",
+  "yomishi-core/proto",
+  "yomishi-core/local_server",
+]
 
 [workspace.dependencies]
 yomishi_config_gen = { path = "yomishi-core/config_gen" }
 yomishi_config = { path = "yomishi-core/config" }
+yomishi_proto_gen = { path = "yomishi-core/proto_gen" }
+yomishi_proto = { path = "yomishi-core/proto" }
+yomishi_local_server = { path = "yomishi-core/local_server" }
+yomishi = { path = "yomishi-core" }

@@ -3,36 +3,11 @@ use rusqlite::params;
 use serde_json::Value;
 use yomishi_config::{BooleanKeys, IntegerKeys, StringKeys};
 
-use crate::{error::Result, protos::yomishi::config::Config};
+use crate::error::Result;
 
 use super::Database;
 
 impl Database {
-    pub fn set_config(&self, proto: &Config) -> Result<()> {
-        self.conn
-            .prepare(
-                "INSERT INTO config(
-                    proto
-                ) VALUES (?)",
-            )?
-            .execute(params![&proto.encode_to_vec()])?;
-        Ok(())
-    }
-
-    pub fn get_config(&self) -> Result<Config> {
-        Ok(Config::decode(
-            &*self
-                .conn
-                .prepare(
-                    "SELECT proto
-                        FROM config
-                        ORDER BY id DESC
-                        LIMIT 1;",
-                )?
-                .query_row([], |row| row.get::<_, Vec<u8>>(0))?,
-        )?)
-    }
-
     // TODO: different result for db error / no value
     pub fn get_serde(&self, key: &str) -> Result<Value> {
         Ok(serde_json::from_str(

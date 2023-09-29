@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection};
 
-use crate::{dict::parser::term_meta::TermMeta, dictionary::search::DictionaryTagged};
+use crate::{dict::parser::term_meta::TermMeta, scan::search::DictionaryTagged};
 
 use super::Database;
 

@@ -1,7 +1,6 @@
-import { createPromiseClient } from "@bufbuild/connect";
-import { createGrpcWebTransport } from "@bufbuild/connect-web";
 import { Scan } from "@yomishi-proto/scan_connect";
 import { ScanStringRequest } from "@yomishi-proto/scan_pb";
+import { createRpcClient } from "../../rpc_transport";
 import { updateFrame } from "./frames";
 
 console.log("yomishi init!");
@@ -26,8 +25,7 @@ async function scanFromEvent(e: MouseEvent) {
 
         const req = ScanStringRequest.fromJson({ text: lastScan });
 
-        const transport = createGrpcWebTransport({ baseUrl: "http://[::1]:50051" });
-        const client = createPromiseClient(Scan, transport);
+        const client = createRpcClient(Scan, "http://127.0.0.1:50051");
 
         const data = await client.scanString(req);
         if (data.results.length > 0) {
