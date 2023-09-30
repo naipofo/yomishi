@@ -8,5 +8,7 @@
 
 <section>
     <h2>{title}</h2>
-    <main>Lorem, ipsum dolor sit amet!</main>
+    <main>
+        <slot>no settings</slot>
+    </main>
 </section>

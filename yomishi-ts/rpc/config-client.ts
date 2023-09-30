@@ -10,7 +10,7 @@ export function createConfigRpc(transport: RpcTransport) {
 
     const makeInterface = <T extends readonly string[], V extends JsonValue, N extends string>(
         type: CONFIG_TYPE,
-        name: string,
+        type_name: string,
     ):
         & {
             [Prop in `get${N}`]: (key: T[number]) => Promise<V>;
@@ -18,14 +18,14 @@ export function createConfigRpc(transport: RpcTransport) {
         & {
             [Prop in `set${N}`]: (key: T[number], value: V) => Promise<void>;
         } => ({
-            [`get${name}`]: async (key: T[number]) =>
+            [`get${type_name}`]: async (key: T[number]) =>
                 JSON.parse(
                     (await clinet.fetchConfig(FetchConfigRequest.fromJson({
                         type,
                         key,
                     }))).config,
                 ) as V,
-            [`set${name}`]: (key: T[number], value: V) =>
+            [`set${type_name}`]: (key: T[number], value: V) =>
                 clinet.pushConfig(PushConfigRequest.fromJson({
                     type,
                     key,
