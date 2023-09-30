@@ -1,4 +1,4 @@
-import { boolean_keys } from "@yomishi-config/config";
+import { booleanKeys } from "@yomishi-config/config";
 import { type Writable, writable } from "svelte/store";
 import { createConfigRpc } from "../rpc/config-client";
 import { RpcTransport } from "../rpc/transport";
@@ -46,7 +46,7 @@ export function createConfigStoreProvider(
     };
 
     return {
-        createBoolStore(key: typeof boolean_keys[number]): ApiStore<boolean> {
+        createBoolStore(key: typeof booleanKeys[number]): ApiStore<boolean> {
             return fetchStore(key, "Boolean");
         },
     };

@@ -40,4 +40,4 @@ pub fn compile_ts_config_to_stdout(toml_def: &str) {
 }
 
 // TODO: better structure for config / proto generators
-// the structure of both is a bit ugly and sometimes buggy
+// the structure of both is a very ugly and sometimes buggy

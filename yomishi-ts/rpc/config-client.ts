@@ -1,31 +1,42 @@
 import { JsonValue } from "@bufbuild/protobuf";
-import { boolean_keys, integer_keys, string_keys } from "@yomishi-config/config";
+import {
+    booleanInterfaceConfig,
+    ConfigInterfaceSpec,
+    integerInterfaceConfig,
+    stringInterfaceConfig,
+} from "@yomishi-config/config";
 import { Config } from "@yomishi-proto/config_connect";
-import { CONFIG_TYPE, FetchConfigRequest, PushConfigRequest } from "@yomishi-proto/config_pb";
+import { FetchConfigRequest, PushConfigRequest } from "@yomishi-proto/config_pb";
 import { createGenericRpcClient } from "./generic-client";
 import { RpcTransport } from "./transport";
+
+// TODO: incorporate default values from spec
+// should be shown as disabled before the real ones get loaded from server
 
 export function createConfigRpc(transport: RpcTransport) {
     const clinet = createGenericRpcClient(transport, Config);
 
-    const makeInterface = <T extends readonly string[], V extends JsonValue, N extends string>(
-        type: CONFIG_TYPE,
-        type_name: string,
+    const makeInterface = <
+        Value extends JsonValue,
+        Keys extends readonly string[],
+        TypeName extends string,
+    >(
+        { name, type }: ConfigInterfaceSpec<Value, Keys, TypeName>,
     ):
         & {
-            [Prop in `get${N}`]: (key: T[number]) => Promise<V>;
+            [Prop in `get${TypeName}`]: (key: Keys[number]) => Promise<Value>;
         }
         & {
-            [Prop in `set${N}`]: (key: T[number], value: V) => Promise<void>;
+            [Prop in `set${TypeName}`]: (key: Keys[number], value: Value) => Promise<void>;
         } => ({
-            [`get${type_name}`]: async (key: T[number]) =>
+            [`get${name}`]: async (key: Keys[number]) =>
                 JSON.parse(
                     (await clinet.fetchConfig(FetchConfigRequest.fromJson({
                         type,
                         key,
                     }))).config,
-                ) as V,
-            [`set${type_name}`]: (key: T[number], value: V) =>
+                ) as Value,
+            [`set${name}`]: (key: Keys[number], value: Value) =>
                 clinet.pushConfig(PushConfigRequest.fromJson({
                     type,
                     key,
@@ -33,10 +44,11 @@ export function createConfigRpc(transport: RpcTransport) {
                 })),
         } as any);
 
-    // TODO: is the string type param really needed? Maybe ask someone smarter.
+    let a = makeInterface(booleanInterfaceConfig);
+
     return {
-        ...makeInterface<typeof boolean_keys, boolean, "Boolean">(CONFIG_TYPE.BOOLEAN, "Boolean"),
-        ...makeInterface<typeof integer_keys, number, "Integer">(CONFIG_TYPE.INTEGER, "Integer"),
-        ...makeInterface<typeof string_keys, string, "String">(CONFIG_TYPE.STRING, "String"),
+        ...makeInterface(booleanInterfaceConfig),
+        ...makeInterface(integerInterfaceConfig),
+        ...makeInterface(stringInterfaceConfig),
     };
 }
