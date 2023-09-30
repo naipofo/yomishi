@@ -27,14 +27,12 @@ pub fn generate_source_ts(data: ConfigData) -> String {
 
         buf.push_str(&format!(
             r#"
-        export const {lowercase_name}InterfaceConfig: ConfigInterfaceSpec<{},typeof {enum_name}, "{}"> = {{
-            name: "{}",
-            type: CONFIG_TYPE.{},
+        export const {lowercase_name}InterfaceConfig: ConfigInterfaceSpec<{ts},typeof {enum_name}, "{ts}"> = {{
+            name: "{ts}",
+            type: CONFIG_TYPE.{prot},
             defaultValues: {{"#,
-            config_type.ts_type(),
-            config_type.method_name(),
-            config_type.method_name(),
-            config_type.proto_enum_name()
+            ts = config_type.ts_type(),
+            prot = config_type.proto_enum_name()
         ));
         for ConfigEntry { name, default } in entries {
             buf.push_str(&format!(
@@ -50,14 +48,6 @@ pub fn generate_source_ts(data: ConfigData) -> String {
 
 impl ConfigType {
     // TODO: get rid of this in favor of one more dot on client
-    fn method_name(&self) -> &'static str {
-        match self {
-            ConfigType::String => "String",
-            ConfigType::Boolean => "Boolean",
-            ConfigType::Integer => "Integer",
-            ConfigType::Serde => "Any",
-        }
-    }
     fn ts_type(&self) -> &'static str {
         match self {
             ConfigType::String => "string",

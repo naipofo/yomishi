@@ -22,29 +22,28 @@ export function createConfigRpc(transport: RpcTransport) {
         TypeName extends string,
     >(
         { name, type }: ConfigInterfaceSpec<Value, Keys, TypeName>,
-    ):
-        & {
-            [Prop in `get${TypeName}`]: (key: Keys[number]) => Promise<Value>;
-        }
-        & {
-            [Prop in `set${TypeName}`]: (key: Keys[number], value: Value) => Promise<void>;
-        } => ({
-            [`get${name}`]: async (key: Keys[number]) =>
+    ): {
+        [Prop in TypeName]: {
+            get: (key: Keys[number]) => Promise<Value>;
+            set: (key: Keys[number], value: Value) => Promise<void>;
+        };
+    } => ({
+        [name]: {
+            get: async (key: Keys[number]) =>
                 JSON.parse(
                     (await clinet.fetchConfig(FetchConfigRequest.fromJson({
                         type,
                         key,
                     }))).config,
                 ) as Value,
-            [`set${name}`]: (key: Keys[number], value: Value) =>
+            set: (key: Keys[number], value: Value) =>
                 clinet.pushConfig(PushConfigRequest.fromJson({
                     type,
                     key,
                     value: JSON.stringify(value),
                 })),
-        } as any);
-
-    let a = makeInterface(booleanInterfaceConfig);
+        },
+    } as any);
 
     return {
         ...makeInterface(booleanInterfaceConfig),

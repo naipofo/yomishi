@@ -47,7 +47,7 @@ export function createConfigStoreProvider(
 
     return {
         createBoolStore(key: typeof booleanKeys[number]): ApiStore<boolean> {
-            return fetchStore(key, "Boolean");
+            return fetchStore(key, "boolean");
         },
     };
 }
