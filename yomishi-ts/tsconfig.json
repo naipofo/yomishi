@@ -3,7 +3,8 @@
         "outDir": "../out",
         "rootDir": "..",
         "paths": {
-            "@yomishi-proto/*": ["../out/ts-protos/*"]
+            "@yomishi-proto/*": ["../out/ts-protos/*"],
+            "@yomishi-config/*": ["../out/ts-config/*"]
         },
         "strict": true,
         "strictNullChecks": true,
