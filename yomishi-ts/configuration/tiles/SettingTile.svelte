@@ -15,5 +15,25 @@
 <style lang="scss">
     header {
         flex-grow: 1;
+        * {
+            font-size: 1rem;
+        }
+        h1 {
+            margin: 0;
+            font-weight: bold;
+        }
+        span {
+            font-weight: normal;
+            color: #222;
+        }
+    }
+
+    div {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+    }
+    div:not(:last-child) {
+        border-bottom: 1px solid #cccccc;
     }
 </style>

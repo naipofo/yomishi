@@ -31,5 +31,9 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        gap: 16px;
+    }
+    nav {
+        display: none;
     }
 </style>

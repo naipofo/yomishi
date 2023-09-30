@@ -7,8 +7,23 @@
 </script>
 
 <section>
-    <h2>{title}</h2>
+    <header>
+        {title}
+    </header>
     <main>
         <slot>no settings</slot>
     </main>
 </section>
+
+<style lang="scss">
+    section {
+        width: min(800px, calc(100vw - 40px));
+    }
+    main {
+        background-color: white;
+    }
+    header {
+        font-size: 1.4rem;
+        padding-left: 1rem;
+    }
+</style>
