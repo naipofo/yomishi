@@ -1,11 +1,16 @@
 <script lang="ts">
-    export let check: boolean | null;
+    import { ApiStore } from "../config-store";
+    export let value: ApiStore<boolean>;
+
+    function input(e: { currentTarget: HTMLInputElement }) {
+        value.set(e.currentTarget.checked);
+    }
 </script>
 
-{#if check === null}
-    <input type="checkbox" disabled />
+{#if $value.busy}
+    <input type="checkbox" checked={$value.value} disabled />
 {:else}
-    <input type="checkbox" bind:checked={check} />
+    <input type="checkbox" checked={$value.value} on:input={(e) => input(e)} />
 {/if}
 
 <style lang="scss">

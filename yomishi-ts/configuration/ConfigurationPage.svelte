@@ -6,11 +6,9 @@
     import SettingTile from "./tiles/SettingTile.svelte";
     import ToggleSetting from "./tiles/ToggleSetting.svelte";
 
-    let provider = createConfigStoreProvider(
+    let config = createConfigStoreProvider(
         createLocalServerTransport("http://127.0.0.1:50051"),
     );
-
-    let store = provider.createBoolStore("AnkiEnabled");
 </script>
 
 <ConfigScaffold>
@@ -20,7 +18,7 @@
             title="Use AnkiConnect"
             desc="Use AnkiConnect API to create flashcards."
         >
-            <ToggleSetting bind:check={$store} />
+            <ToggleSetting value={config.boolean("AnkiEnabled")} />
         </SettingTile>
     </Section>
     <Section title="Popup" />

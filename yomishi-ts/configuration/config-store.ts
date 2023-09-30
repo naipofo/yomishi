@@ -5,11 +5,18 @@ import {
     integerInterfaceConfig,
     stringInterfaceConfig,
 } from "@yomishi-config/config";
-import { type Writable, writable } from "svelte/store";
-import { createConfigRpc } from "../rpc/config-client";
+import { type Readable, type Writable, writable } from "svelte/store";
+import { AsyncGetSet, createConfigRpc } from "../rpc/config-client";
 import { RpcTransport } from "../rpc/transport";
 
-type ApiStore<T> = Omit<Writable<T | null>, "update">;
+export type ApiStore<T> = Readable<ConfigValue<T>> & {
+    set: (value: T) => void;
+};
+
+export type ConfigValue<T> = {
+    busy: boolean;
+    value: T;
+};
 
 export function createConfigStoreProvider(
     transport: RpcTransport,
@@ -19,23 +26,36 @@ export function createConfigStoreProvider(
     const client = createConfigRpc(transport);
     const stores: Record<string, ApiStore<any>> = {};
 
-    const createStore = <K>(
+    const createStore = <V>(
         key: string,
         type_name: keyof typeof client,
-    ): ApiStore<K> => {
-        const store: Writable<any | null> = writable(null);
+    ): ApiStore<V> => {
+        const api: AsyncGetSet<typeof key, V> = client[type_name] as any;
 
-        (client[type_name].get as any)(key).then((e: K) => {
-            store.set(e);
+        const store: Writable<ConfigValue<V>> = writable({
+            busy: true,
+            value: api.default(key),
+        });
+
+        api.get(key).then(e => {
+            store.set({
+                busy: false,
+                value: e,
+            });
         });
 
         return {
             subscribe: store.subscribe as any,
             set: (value) => {
-                if (value === null) return;
-                store.set(null);
-                (client[type_name].set as any)(key).then(() => {
-                    store.set(value);
+                store.set({
+                    busy: true,
+                    value,
+                });
+                api.set(key, value).then(() => {
+                    store.set({
+                        busy: false,
+                        value,
+                    });
                 });
             },
         };
@@ -57,9 +77,7 @@ export function createConfigStoreProvider(
     >({ name }: ConfigInterfaceSpec<Value, Keys, TypeName>): {
         [Prop in TypeName]: (key: Keys[number]) => ApiStore<Value>;
     } => ({
-        [name]: (key: Keys[number]) => {
-            fetchStore<Value>(key, name as any);
-        },
+        [name]: (key: Keys[number]) => fetchStore<Value>(key, name as any),
     } as any);
 
     return {

@@ -5,7 +5,7 @@ pub fn generate_source_ts(data: ConfigData) -> String {
 
     buf.push_str(r#"
     import { JsonValue } from "@bufbuild/protobuf";
-    import { CONFIG_TYPE } from "@yomishi-proto/config_pb";
+    import { CONFIG_TYPE } from "../ts-protos/config_pb";
     
     export type ConfigInterfaceSpec<V extends JsonValue, Keys extends readonly string[], N extends string> = {
         name: N;

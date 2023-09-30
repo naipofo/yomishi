@@ -16,6 +16,7 @@ import { RpcTransport } from "./transport";
 export type AsyncGetSet<Key, Value> = {
     get: (key: Key) => Promise<Value>;
     set: (key: Key, value: Value) => Promise<void>;
+    default: (key: Key) => Value;
 };
 
 export function createConfigRpc(transport: RpcTransport) {
@@ -26,7 +27,7 @@ export function createConfigRpc(transport: RpcTransport) {
         Keys extends readonly string[],
         TypeName extends string,
     >(
-        { name, type }: ConfigInterfaceSpec<Value, Keys, TypeName>,
+        { name, type, defaultValues }: ConfigInterfaceSpec<Value, Keys, TypeName>,
     ): {
         [Prop in TypeName]: AsyncGetSet<Keys[number], Value>;
     } => ({
@@ -44,6 +45,7 @@ export function createConfigRpc(transport: RpcTransport) {
                     key,
                     value: JSON.stringify(value),
                 })),
+            default: (key: Keys[number]) => defaultValues[key],
         },
     } as any);
 
