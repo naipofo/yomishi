@@ -4,6 +4,7 @@ package yomishi.config;
 
 service Config {
   rpc FetchConfig(FetchConfigRequest) returns (FetchConfigReply) {}
+  rpc PushConfig(PushConfigRequest) returns (PushConfigReply) {}
 }
 
 enum CONFIG_TYPE{
@@ -19,3 +20,11 @@ message FetchConfigRequest {
 }
 
 message FetchConfigReply { string config = 1; }
+
+message PushConfigRequest {
+  CONFIG_TYPE type = 1;
+  string key = 2;
+  string value = 3;
+}
+
+message PushConfigReply { }

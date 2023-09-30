@@ -57,12 +57,12 @@ impl ServiceGenerator for ServiceGen {
         {
             writeln!(
                 buf,
-                "\"{proto_name}\" => self.0.{name}({input_type}::decode(data).unwrap()), "
+                "\"{proto_name}\" => self.0.{name}({input_type}::decode(data).unwrap()).encode_to_vec(), "
             )
             .unwrap();
         }
         buf.push_str(" _ => panic!()");
-        buf.push_str("}.encode_to_vec()}");
+        buf.push_str("}}");
         writeln!(buf, "fn name(&self) -> &'static str{{\"{proto_name}\"}}").unwrap();
         buf.push('}');
     }
