@@ -12,6 +12,7 @@
 
 <div>
     <nav>
+        <!-- TODO: jump to section links -->
         {#each sections as section}
             <p>{section}</p>
         {/each}

@@ -10,8 +10,7 @@ import { FetchConfigRequest, PushConfigRequest } from "@yomishi-proto/config_pb"
 import { createGenericRpcClient } from "./generic-client";
 import { RpcTransport } from "./transport";
 
-// TODO: incorporate default values from spec
-// should be shown as disabled before the real ones get loaded from server
+// TODO: fetch multiple values from the server at once
 
 export type AsyncGetSet<Key, Value> = {
     get: (key: Key) => Promise<Value>;
