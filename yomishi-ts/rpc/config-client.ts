@@ -13,6 +13,11 @@ import { RpcTransport } from "./transport";
 // TODO: incorporate default values from spec
 // should be shown as disabled before the real ones get loaded from server
 
+export type AsyncGetSet<Key, Value> = {
+    get: (key: Key) => Promise<Value>;
+    set: (key: Key, value: Value) => Promise<void>;
+};
+
 export function createConfigRpc(transport: RpcTransport) {
     const clinet = createGenericRpcClient(transport, Config);
 
@@ -23,10 +28,7 @@ export function createConfigRpc(transport: RpcTransport) {
     >(
         { name, type }: ConfigInterfaceSpec<Value, Keys, TypeName>,
     ): {
-        [Prop in TypeName]: {
-            get: (key: Keys[number]) => Promise<Value>;
-            set: (key: Keys[number], value: Value) => Promise<void>;
-        };
+        [Prop in TypeName]: AsyncGetSet<Keys[number], Value>;
     } => ({
         [name]: {
             get: async (key: Keys[number]) =>
