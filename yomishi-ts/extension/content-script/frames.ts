@@ -4,9 +4,9 @@ import { browser } from "../browser-extension";
 // TODO: proper API between script and iframe
 // including proxing protobuf requests
 export type ScanMessage = {
-    data: ScanStringReply,
-    scanString: string
-}
+    data: ScanStringReply;
+    scanString: string;
+};
 
 const height = 300;
 const width = 600;

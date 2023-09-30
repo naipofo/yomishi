@@ -1,11 +1,11 @@
 import { boolean_keys, integer_keys, string_keys } from "@yomishi-config/config";
 import { Config } from "@yomishi-proto/config_connect";
 import { CONFIG_TYPE, FetchConfigRequest } from "@yomishi-proto/config_pb";
-import { createRpcClient } from "./rpc_transport";
-console.log(boolean_keys, integer_keys, string_keys);
+import { createGenericRpcClient } from "./generic-client";
+import { RpcTransport } from "./transport";
 
-export function createConfigRpc(url: string) {
-    const clinet = createRpcClient(Config, url);
+export function createConfigRpc(transport: RpcTransport) {
+    const clinet = createGenericRpcClient(transport, Config);
     const getVal = <T extends readonly string[], R>(type: CONFIG_TYPE) => async (key: T[number]) =>
         JSON.parse(
             (await clinet.fetchConfig(FetchConfigRequest.fromJson({
