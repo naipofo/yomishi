@@ -6,6 +6,10 @@
     "action": {
         "default_popup": "action-popup.html"
     },
+    "options_ui": {
+        "page": "configuration.html",
+        "open_in_tab": true
+    },
     "content_scripts": [
         {
             "matches": [
