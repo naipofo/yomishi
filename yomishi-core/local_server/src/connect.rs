@@ -8,7 +8,7 @@ use std::{
     thread,
 };
 
-use yomishi_proto::yomishi::scan::ScanServer;
+use yomishi_proto::yomishi::{config::ConfigServer, scan::ScanServer};
 
 pub struct RcpRequest {
     pub service: String,
@@ -64,10 +64,15 @@ impl RpcMediator {
     }
 }
 fn resolver_thread(rx: mpsc::Receiver<RcpRequest>, tx: mpsc::Sender<Vec<u8>>) {
+    // TODO: move this somewhere else
     let backend = Rc::new(yomishi::backend::Backend::new().unwrap());
-    let server = Rc::new(ScanServer(backend.clone()));
     let mut resolver = RcpResolver::new();
-    resolver.add(server.clone());
+
+    let scan = Rc::new(ScanServer(backend.clone()));
+    resolver.add(scan.clone());
+
+    let config = Rc::new(ConfigServer(backend.clone()));
+    resolver.add(config.clone());
 
     loop {
         let a = rx.recv().unwrap();

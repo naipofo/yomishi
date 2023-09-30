@@ -2,31 +2,20 @@ syntax = "proto3";
 
 package yomishi.config;
 
-service ConfigService {
+service Config {
   rpc FetchConfig(FetchConfigRequest) returns (FetchConfigReply) {}
-  rpc PushConfig(PushConfigRequest) returns (PushConfigReply) {}
 }
 
-message FetchConfigRequest { }
-
-message FetchConfigReply { Config config = 1; }
-
-message PushConfigRequest { Config config = 1; }
-
-message PushConfigReply { }
-
-// Figure out something better than a flat map in protos
-message Config {
-  repeated int64 disabled_dictionaries = 1;
-
-  int64 popup_width = 2;
-  int64 popup_height = 3;
-  
-  
-  bool anki_enabled = 4;
-  string anki_connect_addrees = 5; 
-  string anki_deck_name = 6;
-  string anki_model_name = 7;
-  string anki_tag = 8;
-  map<string, string> anki_fields = 9;
+enum CONFIG_TYPE{
+  STRING = 0;
+  BOOLEAN = 1;
+  INTEGER = 2;
+  SERDE = 3;  
 }
+
+message FetchConfigRequest {
+  CONFIG_TYPE type = 1;
+  string key = 2;
+}
+
+message FetchConfigReply { string config = 1; }

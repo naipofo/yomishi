@@ -10,7 +10,7 @@ pub fn generate_source(data: ConfigData) -> String {
         );
 
         buf.push_str(&format!(
-            "#[derive(Debug, strum::IntoStaticStr)]\npub enum {enum_name} {{\n",
+            "#[derive(Debug, strum::IntoStaticStr, strum::EnumString)]\npub enum {enum_name} {{\n",
         ));
         for key in &entries {
             buf.push_str(&format!("{},\n", key.name));

@@ -39,6 +39,9 @@ async fn main() {
                     let method_name = path.remove(0);
 
                     let data = hyper::body::to_bytes(body).await.unwrap().to_vec();
+                    if data.is_empty() {
+                        return Ok::<_, Infallible>(Response::new(Body::from("")));
+                    }
 
                     let data = mediator.rpc(RcpRequest {
                         service,

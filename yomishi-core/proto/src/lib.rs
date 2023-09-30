@@ -2,6 +2,9 @@ pub mod yomishi {
     pub mod scan {
         include!(concat!(env!("OUT_DIR"), "/yomishi.scan.rs"));
     }
+    pub mod config {
+        include!(concat!(env!("OUT_DIR"), "/yomishi.config.rs"));
+    }
 }
 
 pub trait ProtoService {

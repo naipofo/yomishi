@@ -4,6 +4,7 @@ use prost_build::Config;
 use yomishi_proto_gen::ServiceGen;
 
 fn main() {
+    println!("cargo:rerun-if-changed=../../proto/yomishi");
     let src = PathBuf::from("../../proto/yomishi");
     let includes = &[src.clone()];
 
@@ -11,6 +12,9 @@ fn main() {
     config.service_generator(Box::new(ServiceGen));
 
     config
-        .compile_protos(&[src.join("scan.proto")], includes)
+        .compile_protos(
+            &[src.join("scan.proto"), src.join("config.proto")],
+            includes,
+        )
         .unwrap();
 }
