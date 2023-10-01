@@ -6,6 +6,7 @@ export type ApiStore<T> =
     & Readable<ConfigValue<T>>
     & {
         set: (value: T) => void;
+        // TODO: reset to default + isDefault
     };
 
 export type ConfigValue<T> = {

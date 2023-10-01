@@ -38,4 +38,26 @@ impl Database {
             )?
             .query_row(params![id], |e| e.get(0))
     }
+
+    pub fn get_dicts(&self) -> rusqlite::Result<Vec<(i64, DictIndex)>> {
+        self.conn
+            .prepare(
+                "SELECT
+                id,
+                title,
+                revision
+            FROM dictionaries",
+            )?
+            .query_map(params![], |e| {
+                Ok((
+                    e.get(0)?,
+                    DictIndex {
+                        title: e.get(1)?,
+                        revision: e.get(2)?,
+                        format: 3,
+                    },
+                ))
+            })?
+            .collect()
+    }
 }

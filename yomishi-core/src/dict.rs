@@ -20,7 +20,7 @@ pub mod parser;
 pub struct DictIndex {
     pub title: String,
     pub revision: String,
-    format: i64,
+    pub format: i64,
 }
 
 pub type LoadedDict = (

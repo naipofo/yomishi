@@ -1,4 +1,6 @@
-<script>
+<script lang="ts">
+    import { Config } from "@yomishi-proto/config_connect";
+    import { createGenericRpcClient } from "../rpc/generic-client";
     import { createLocalServerTransport } from "../rpc/transport";
     import ConfigScaffold from "./ConfigScaffold.svelte";
     import Section from "./Section.svelte";
@@ -6,15 +8,44 @@
     import DimensionsSetting from "./tiles/DimensionsSetting.svelte";
     import SettingTile from "./tiles/SettingTile.svelte";
     import TextSetting from "./tiles/TextSetting.svelte";
+    import ToggleListSetting from "./tiles/DictListSetting.svelte";
     import ToggleSetting from "./tiles/ToggleSetting.svelte";
+    import { DictionaryListRequest } from "@yomishi-proto/config_pb";
 
-    let config = createConfigStoreProvider(
-        createLocalServerTransport("http://127.0.0.1:50051"),
-    );
+    const transport = createLocalServerTransport("http://127.0.0.1:50051");
+
+    const config = createConfigStoreProvider(transport);
+
+    const configClient = createGenericRpcClient(transport, Config);
+    const dictList = configClient
+        .dictionaryList(DictionaryListRequest.fromJson({}))
+        .then((r) =>
+            r.dictionaries
+                .map((e) => [Number(e.id), e.name] as [number, string])
+                .sort((a, b) => a[0] - b[0]),
+        );
+
+    (async () => {
+        console.log(
+            await configClient.dictionaryList(DictionaryListRequest.fromJson({})),
+        );
+    })();
 </script>
 
 <ConfigScaffold>
-    <Section title="Dictionaries" />
+    <Section title="Dictionaries">
+        <SettingTile
+            title="Toggle Enabled Dictionaries"
+            desc="Enable or disable dictionaries from search"
+            wide={true}
+        >
+            {#await dictList}
+                <p>loading...</p>
+            {:then labelList}
+                <ToggleListSetting value={config("DictionariesDisabled")} {labelList} />
+            {/await}
+        </SettingTile>
+    </Section>
     <Section title="Anki">
         <SettingTile
             title="Use AnkiConnect"

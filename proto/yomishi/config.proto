@@ -5,6 +5,8 @@ package yomishi.config;
 service Config {
   rpc FetchConfig(FetchConfigRequest) returns (FetchConfigReply) {}
   rpc PushConfig(PushConfigRequest) returns (PushConfigReply) {}
+
+  rpc DictionaryList(DictionaryListRequest) returns (DictionaryListReply) {}
 }
 
 enum CONFIG_TYPE{
@@ -28,3 +30,14 @@ message PushConfigRequest {
 }
 
 message PushConfigReply { }
+
+message Dictionary {
+  int64 id = 1;
+  string name = 2; // TODO: full metadata
+}
+
+message DictionaryListRequest { }
+
+message DictionaryListReply {
+  repeated Dictionary dictionaries = 1;
+}

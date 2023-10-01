@@ -3,10 +3,11 @@ use std::str::FromStr;
 use serde_json::Value;
 use yomishi_config::{BooleanKeys, IntegerKeys, SerdeKeys, StringKeys};
 use yomishi_proto::yomishi::config::{
-    Config, ConfigType, FetchConfigReply, FetchConfigRequest, PushConfigReply, PushConfigRequest,
+    Config, ConfigType, Dictionary, DictionaryListReply, DictionaryListRequest, FetchConfigReply,
+    FetchConfigRequest, PushConfigReply, PushConfigRequest,
 };
 
-use crate::backend::Backend;
+use crate::{backend::Backend, dict::DictIndex};
 
 impl Config for Backend {
     fn fetch_config(&self, data: FetchConfigRequest) -> FetchConfigReply {
@@ -40,6 +41,28 @@ impl Config for Backend {
         .unwrap();
 
         PushConfigReply {}
+    }
+
+    fn dictionary_list(&self, _: DictionaryListRequest) -> DictionaryListReply {
+        DictionaryListReply {
+            dictionaries: self
+                .storage
+                .get_dicts()
+                .unwrap()
+                .into_iter()
+                .map(
+                    |(
+                        id,
+                        DictIndex {
+                            title, revision, ..
+                        },
+                    )| Dictionary {
+                        id,
+                        name: format!("{} / {}", title, revision),
+                    },
+                )
+                .collect(),
+        }
     }
 }
 

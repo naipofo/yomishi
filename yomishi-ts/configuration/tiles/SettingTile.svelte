@@ -1,9 +1,11 @@
 <script lang="ts">
     export let title: String;
     export let desc: String;
+
+    export let wide: boolean = false;
 </script>
 
-<div>
+<div class:wide>
     <header>
         <h1>{title}</h1>
         <span>{desc}</span>
@@ -32,8 +34,13 @@
         display: flex;
         align-items: center;
         padding: 1rem;
-    }
-    div:not(:last-child) {
-        border-bottom: 1px solid #cccccc;
+        &.wide {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+        &:not(:last-child) {
+            border-bottom: 1px solid #cccccc;
+        }
     }
 </style>
