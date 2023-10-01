@@ -2,12 +2,10 @@ import { type Readable, writable } from "svelte/store";
 import { ConfigKeys, ConfigType, createConfigRpc } from "../rpc/config-client";
 import { RpcTransport } from "../rpc/transport";
 
-export type ApiStore<Key extends ConfigKeys> =
-    & Readable<
-        ConfigValue<ConfigType<Key>>
-    >
+export type ApiStore<T> =
+    & Readable<ConfigValue<T>>
     & {
-        set: (value: ConfigType<Key>) => void;
+        set: (value: T) => void;
     };
 
 export type ConfigValue<T> = {
@@ -19,9 +17,9 @@ export function createConfigStoreProvider(
     transport: RpcTransport,
 ) {
     const client = createConfigRpc(transport);
-    const stores: { [K in ConfigKeys]?: ApiStore<K> } = {};
+    const stores: { [K in ConfigKeys]?: ApiStore<ConfigType<K>> } = {};
 
-    const makeStore = <Key extends ConfigKeys>(key: Key): ApiStore<Key> => {
+    const makeStore = <Key extends ConfigKeys>(key: Key): ApiStore<ConfigType<Key>> => {
         const { set, update, subscribe } = writable({
             busy: true,
             value: client.default(key),
@@ -34,7 +32,7 @@ export function createConfigStoreProvider(
             })
         );
 
-        return {
+        const store = {
             subscribe,
             set: (value: ConfigType<Key>) => {
                 set({
@@ -49,9 +47,14 @@ export function createConfigStoreProvider(
                 });
             },
         };
+        (stores as any)[key] = store;
+        return store;
     };
 
     return <Key extends ConfigKeys>(key: Key) => {
+        if (!stores[key]) {
+            console.log("creating store", key);
+        }
         return stores[key] || makeStore(key);
     };
 }

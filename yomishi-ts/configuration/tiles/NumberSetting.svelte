@@ -1,13 +1,13 @@
 <script lang="ts">
     import { ApiStore } from "../config-store";
-    import { debounceToStore } from "./store-debounce";
+    import { debounceToStore, numberTransform } from "./store-debounce";
 
     export let value: ApiStore<number>;
 
-    const input = debounceToStore<number>(value, (e) => {
-        const r = parseInt(e);
-        return r > 0 ? r : 0;
-    });
+    export let min: number | undefined;
+    export let max: number | undefined;
+
+    const input = debounceToStore<number>(value, numberTransform(min, max));
 </script>
 
 <input type="number" value={$value.value} class:busy={$value.busy} on:input={input} />

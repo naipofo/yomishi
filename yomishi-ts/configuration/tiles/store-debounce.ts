@@ -13,3 +13,11 @@ export function debounceToStore<T = string>(
     };
     return callable;
 }
+
+export function numberTransform(min: number = 0, max: number = Infinity) {
+    if (min > max) throw Error();
+    return (e: string) => {
+        const r = parseInt(e);
+        return r < min ? min : r > max ? max : r;
+    };
+}

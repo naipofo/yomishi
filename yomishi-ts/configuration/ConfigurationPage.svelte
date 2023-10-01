@@ -3,7 +3,7 @@
     import ConfigScaffold from "./ConfigScaffold.svelte";
     import Section from "./Section.svelte";
     import { createConfigStoreProvider } from "./config-store";
-    import NumberSetting from "./tiles/NumberSetting.svelte";
+    import DimensionsSetting from "./tiles/DimensionsSetting.svelte";
     import SettingTile from "./tiles/SettingTile.svelte";
     import TextSetting from "./tiles/TextSetting.svelte";
     import ToggleSetting from "./tiles/ToggleSetting.svelte";
@@ -30,15 +30,14 @@
         </SettingTile>
     </Section>
     <Section title="Popup">
-        <!-- TODO: double-value input for popup size -->
-        <SettingTile title="Popup Width" desc="Width of the dictionary popup in pixels">
-            <NumberSetting value={config("PopupWidth")} />
-        </SettingTile>
-        <SettingTile
-            title="Popup Height"
-            desc="Height of the dictionary popup in pixels"
-        >
-            <NumberSetting value={config("PopupHeight")} />
+        <SettingTile title="Popup Size" desc="Size of the dictionary popup in pixels">
+            <DimensionsSetting
+                x={config("PopupHeight")}
+                y={config("PopupWidth")}
+                min={100}
+                max={10000}
+                size={true}
+            />
         </SettingTile>
     </Section>
 </ConfigScaffold>
