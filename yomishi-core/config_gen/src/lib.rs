@@ -32,6 +32,16 @@ pub struct ConfigEntry {
     #[serde(default = "String::new")]
     name: String,
     default: String,
+    #[serde(flatten)]
+    types: Option<SerdeTypes>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SerdeTypes {
+    ts_type: String,
+    // TODO: typed access in rust
+    #[allow(dead_code)]
+    rs_type: String,
 }
 
 pub fn compile_ts_config_to_stdout(toml_def: &str) {

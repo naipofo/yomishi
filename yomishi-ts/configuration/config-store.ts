@@ -3,6 +3,7 @@ import {
     booleanInterfaceConfig,
     ConfigInterfaceSpec,
     integerInterfaceConfig,
+    serdeInterfaceConfig,
     stringInterfaceConfig,
 } from "@yomishi-config/config";
 import { type Readable, type Writable, writable } from "svelte/store";

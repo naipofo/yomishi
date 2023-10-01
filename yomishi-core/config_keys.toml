@@ -1,6 +1,8 @@
 [Dictionaries.Disabled]
 type = "Serde"
 default = "[]"
+ts_type = "number[]"
+rs_type = "Vec<i64>"
 
 [Popup.Width]
 type = "Integer"
@@ -33,3 +35,5 @@ default = "yomishi"
 [Anki.Fields]
 type = "Serde"
 default = "{}"
+ts_type = "Record<string, string>"
+rs_type = "std::collections::HashMap<String, String>"

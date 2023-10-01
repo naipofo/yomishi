@@ -1,4 +1,4 @@
-use crate::{ConfigData, ConfigEntry, ConfigType};
+use crate::{ConfigData, ConfigEntry, ConfigType, SerdeTypes};
 
 pub fn generate_source_ts(data: ConfigData) -> String {
     let mut buf = String::new();
@@ -34,13 +34,22 @@ pub fn generate_source_ts(data: ConfigData) -> String {
             ts = config_type.ts_type(),
             prot = config_type.proto_enum_name()
         ));
-        for ConfigEntry { name, default } in entries {
+        for ConfigEntry { name, default, .. } in entries {
             buf.push_str(&format!(
                 "\"{name}\": {},",
                 config_type.ts_value_build(default)
             ));
         }
-        buf.push_str("}} as const;");
+        buf.push_str("}} as const;\n");
+        if let ConfigType::Serde = config_type {
+            buf.push_str("export type serdeType<K extends typeof serdeKeys[number]> = ");
+            for ConfigEntry { name, types, .. } in entries {
+                if let Some(SerdeTypes { ts_type, .. }) = types {
+                    buf.push_str(&format!("K extends \"{name}\" ? {ts_type} :",));
+                }
+            }
+            buf.push_str("never;\n");
+        }
     }
 
     buf
