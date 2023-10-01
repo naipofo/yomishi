@@ -12,9 +12,10 @@ impl Database {
             &self
                 .conn
                 .prepare(
-                    "SELECT value
+                    "SELECT value, id
                     FROM config
-                    WHERE key = ?",
+                    WHERE key = ?
+					ORDER BY id DESC",
                 )?
                 .query_row([key], |row| row.get::<_, String>(0))?,
         )?)

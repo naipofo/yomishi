@@ -20,25 +20,25 @@
             title="Use AnkiConnect"
             desc="Use AnkiConnect API to create flashcards."
         >
-            <ToggleSetting value={config.boolean("AnkiEnabled")} />
+            <ToggleSetting value={config("AnkiEnabled")} />
         </SettingTile>
         <SettingTile
             title="AnkiConnect server address"
             desc="URL used to connect to AnkiConnect."
         >
-            <TextSetting value={config.string("AnkiConnectAddress")} />
+            <TextSetting value={config("AnkiConnectAddress")} />
         </SettingTile>
     </Section>
     <Section title="Popup">
         <!-- TODO: double-value input for popup size -->
         <SettingTile title="Popup Width" desc="Width of the dictionary popup in pixels">
-            <NumberSetting value={config.number("PopupWidth")} />
+            <NumberSetting value={config("PopupWidth")} />
         </SettingTile>
         <SettingTile
             title="Popup Height"
             desc="Height of the dictionary popup in pixels"
         >
-            <NumberSetting value={config.number("PopupHeight")} />
+            <NumberSetting value={config("PopupHeight")} />
         </SettingTile>
     </Section>
 </ConfigScaffold>

@@ -1,70 +1,61 @@
-import { JsonValue } from "@bufbuild/protobuf";
 import {
     booleanInterfaceConfig,
-    ConfigInterfaceSpec,
+    booleanKeys,
     integerInterfaceConfig,
+    integerKeys,
     serdeInterfaceConfig,
     serdeKeys,
     serdeType,
     stringInterfaceConfig,
+    stringKeys,
 } from "@yomishi-config/config";
 import { Config } from "@yomishi-proto/config_connect";
-import { CONFIG_TYPE, FetchConfigRequest, PushConfigRequest } from "@yomishi-proto/config_pb";
+import { FetchConfigRequest, PushConfigRequest } from "@yomishi-proto/config_pb";
 import { createGenericRpcClient } from "./generic-client";
 import { RpcTransport } from "./transport";
 
 // TODO: fetch multiple values from the server at once
 
-export type AsyncGetSet<Key, Value> = {
-    get: (key: Key) => Promise<Value>;
-    set: (key: Key, value: Value) => Promise<void>;
-    default: (key: Key) => Value;
-};
+type StringKeys = typeof stringKeys[number];
+type BoolKeys = typeof booleanKeys[number];
+type IntegerKeys = typeof integerKeys[number];
+type SerdeKeys = typeof serdeKeys[number];
 
-type SerdeKey = typeof serdeKeys[number];
-export type SerdeAsyncGetSet = {
-    get: <Key extends SerdeKey>(key: Key) => Promise<serdeType<Key>>;
-    set: <Key extends SerdeKey>(key: Key, value: serdeType<Key>) => Promise<void>;
-    default: <Key extends SerdeKey>(key: Key) => serdeType<Key>;
-};
+export type ConfigKeys = StringKeys | BoolKeys | IntegerKeys | SerdeKeys;
+
+export type ConfigType<Type extends ConfigKeys> = Type extends IntegerKeys ? number
+    : Type extends StringKeys ? string
+    : Type extends BoolKeys ? boolean
+    : Type extends SerdeKeys ? serdeType<Type>
+    : never;
 
 export function createConfigRpc(transport: RpcTransport) {
     const clinet = createGenericRpcClient(transport, Config);
 
-    const get = async (key: string, type: CONFIG_TYPE) =>
-        JSON.parse(
-            (await clinet.fetchConfig(FetchConfigRequest.fromJson({
-                type,
-                key,
-            }))).config,
-        );
-    const set = (key: string, type: CONFIG_TYPE, value: JsonValue) =>
-        clinet.pushConfig(PushConfigRequest.fromJson({
-            type,
-            key,
-            value: JSON.stringify(value),
-        }));
-
-    const makePlainInterface = <
-        Value extends JsonValue,
-        Keys extends readonly string[],
-        TypeName extends string,
-    >(
-        { name, type, defaultValues }: ConfigInterfaceSpec<Value, Keys, TypeName>,
-    ): {
-        [Prop in TypeName]: AsyncGetSet<Keys[number], Value>;
-    } => ({
-        [name]: {
-            get: async (key: Keys[number]) => get(key, type),
-            set: (key: Keys[number], value: Value) => set(key, type, value),
-            default: (key: Keys[number]) => defaultValues[key],
-        },
-    } as any);
+    const getInterfaceConfig = (key: ConfigKeys) =>
+        integerKeys.includes(key as any)
+            ? integerInterfaceConfig
+            : booleanKeys.includes(key as any)
+            ? booleanInterfaceConfig
+            : stringKeys.includes(key as any)
+            ? stringInterfaceConfig
+            : serdeInterfaceConfig;
 
     return {
-        ...makePlainInterface(booleanInterfaceConfig),
-        ...makePlainInterface(integerInterfaceConfig),
-        ...makePlainInterface(stringInterfaceConfig),
-        ...(makePlainInterface(serdeInterfaceConfig) as { any: SerdeAsyncGetSet }),
+        get: async <Key extends ConfigKeys>(key: Key) =>
+            JSON.parse(
+                (await clinet.fetchConfig(FetchConfigRequest.fromJson({
+                    type: getInterfaceConfig(key).type,
+                    key,
+                }))).config,
+            ) as ConfigType<Key>,
+        set: <Key extends ConfigKeys>(key: Key, value: ConfigType<Key>) =>
+            clinet.pushConfig(PushConfigRequest.fromJson({
+                type: getInterfaceConfig(key).type,
+                key,
+                value: JSON.stringify(value),
+            })),
+        default: <Key extends ConfigKeys>(key: Key) =>
+            (getInterfaceConfig(key).defaultValues as any)[key] as ConfigType<Key>,
     };
 }
