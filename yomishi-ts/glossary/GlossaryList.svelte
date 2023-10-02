@@ -4,13 +4,11 @@
     import { createGenericRpcClient } from "../rpc/generic-client";
     import { createLocalServerTransport } from "../rpc/transport";
     import { OpenCardRequest, SaveDefinitionRequest } from "@yomishi-proto/anki_pb";
+    import { localAddress } from "../rpc/address-manager";
 
     export let message: ScanMessage;
 
-    const anki = createGenericRpcClient(
-        createLocalServerTransport("http://127.0.0.1:50051"),
-        Anki,
-    );
+    const anki = createGenericRpcClient(createLocalServerTransport(localAddress), Anki);
 
     let justAdded: number[] = [];
 

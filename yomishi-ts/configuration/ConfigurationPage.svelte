@@ -11,8 +11,9 @@
     import ToggleListSetting from "./tiles/DictListSetting.svelte";
     import ToggleSetting from "./tiles/ToggleSetting.svelte";
     import { DictionaryListRequest } from "@yomishi-proto/config_pb";
+    import { localAddress } from "../rpc/address-manager";
 
-    const transport = createLocalServerTransport("http://127.0.0.1:50051");
+    const transport = createLocalServerTransport(localAddress);
 
     const config = createConfigStoreProvider(transport);
 
@@ -59,9 +60,23 @@
         >
             <TextSetting value={config("AnkiConnectAddress")} />
         </SettingTile>
+        <!-- TODO: suggest existing note types / decks -->
+        <SettingTile title="Anki Deck name" desc="Deck in which notes will be created.">
+            <TextSetting value={config("AnkiDeckName")} />
+        </SettingTile>
+        <SettingTile
+            title="Anki Tag"
+            desc="Tag added to created noted. Leave empty to not add any."
+        >
+            <TextSetting value={config("AnkiTag")} />
+        </SettingTile>
+        <SettingTile title="Anki Note Type" desc="Note type used to create notes.">
+            <TextSetting value={config("AnkiModelName")} />
+        </SettingTile>
+        <!-- TODO: field/value map setting -->
     </Section>
     <Section title="Popup">
-        <SettingTile title="Popup Size" desc="Size of the dictionary popup in pixels">
+        <SettingTile title="Popup Size" desc="Size of the dictionary popup in pixels.">
             <DimensionsSetting
                 x={config("PopupHeight")}
                 y={config("PopupWidth")}

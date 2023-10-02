@@ -1,5 +1,6 @@
 import { Scan } from "@yomishi-proto/scan_connect";
 import { ScanStringRequest } from "@yomishi-proto/scan_pb";
+import { localAddress } from "../../rpc/address-manager";
 import { createGenericRpcClient } from "../../rpc/generic-client";
 import { createLocalServerTransport } from "../../rpc/transport";
 import { updateFrame } from "./frames";
@@ -9,7 +10,7 @@ console.log("yomishi init!");
 let lastScan = "";
 let isScanning = false;
 
-let rpcTransport = createLocalServerTransport("http://127.0.0.1:50051");
+let rpcTransport = createLocalServerTransport(localAddress);
 
 document.body.addEventListener("mousemove", async (e) => {
     if (!isScanning) {
