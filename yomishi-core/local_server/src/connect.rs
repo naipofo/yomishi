@@ -8,7 +8,7 @@ use std::{
     thread,
 };
 
-use yomishi_proto::yomishi::{config::ConfigServer, scan::ScanServer};
+use yomishi_proto::yomishi::{anki::AnkiServer, config::ConfigServer, scan::ScanServer};
 
 pub struct RcpRequest {
     pub service: String,
@@ -73,6 +73,9 @@ fn resolver_thread(rx: mpsc::Receiver<RcpRequest>, tx: mpsc::Sender<Vec<u8>>) {
 
     let config = Rc::new(ConfigServer(backend.clone()));
     resolver.add(config.clone());
+
+    let anki = Rc::new(AnkiServer(backend.clone()));
+    resolver.add(anki.clone());
 
     loop {
         let a = rx.recv().unwrap();

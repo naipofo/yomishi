@@ -13,7 +13,11 @@ fn main() {
 
     config
         .compile_protos(
-            &[src.join("scan.proto"), src.join("config.proto")],
+            &[
+                src.join("scan.proto"),
+                src.join("config.proto"),
+                src.join("anki.proto"),
+            ],
             includes,
         )
         .unwrap();

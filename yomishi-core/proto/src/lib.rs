@@ -5,6 +5,9 @@ pub mod yomishi {
     pub mod config {
         include!(concat!(env!("OUT_DIR"), "/yomishi.config.rs"));
     }
+    pub mod anki {
+        include!(concat!(env!("OUT_DIR"), "/yomishi.anki.rs"));
+    }
 }
 
 pub trait ProtoService {

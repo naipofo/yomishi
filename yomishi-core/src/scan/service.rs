@@ -1,6 +1,13 @@
+use std::vec;
+
+use yomishi_config::StringKeys::{AnkiConnectAddress, AnkiDeckName, AnkiModelName};
 use yomishi_proto::yomishi::scan::{Scan, ScanResult, ScanStringReply, ScanStringRequest};
 
 use crate::{
+    anki::connect::{
+        actions::{CanAddNotes, Note},
+        AnkiConnectClient,
+    },
     backend::Backend,
     error::Result,
     html::{search_to_template_data, GlossaryTemplateData, HandlebarsRenderer},
@@ -24,12 +31,27 @@ impl Scan for Backend {
 impl Backend {
     fn data_to_result(&self, data: GlossaryTemplateData) -> Result<ScanResult> {
         let content = HandlebarsRenderer::new().render_glossary(&data);
-        // TODO: anki integration
-        // maybe defer it to reduce scan time?
-        Ok(ScanResult {
-            content,
-            anki_can_add: false,
-            card_id: Some(0),
+        // TODO: maybe defer it to reduce scan time?
+
+        let fields = self.render_anki_fields(&data);
+        let note_model = Note {
+            deck_name: &self.storage.get_string(AnkiDeckName),
+            model_name: &self.storage.get_string(AnkiModelName),
+            fields: &fields.iter().map(|(a, b)| (a.as_str(), b.trim())).collect(),
+        };
+
+        self.runtime.block_on(async {
+            Ok(ScanResult {
+                content,
+                anki_can_add: AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress))
+                    .invoke(&CanAddNotes {
+                        notes: &vec![&note_model],
+                    })
+                    .await
+                    .unwrap()
+                    .remove(0),
+                card_id: None,
+            })
         })
     }
 }

@@ -1,7 +1,16 @@
 <script lang="ts">
+    import { Anki } from "@yomishi-proto/anki_connect";
     import { ScanMessage } from "../extension/content-script/frames";
+    import { createGenericRpcClient } from "../rpc/generic-client";
+    import { createLocalServerTransport } from "../rpc/transport";
+    import { OpenCardRequest, SaveDefinitionRequest } from "@yomishi-proto/anki_pb";
 
     export let message: ScanMessage;
+
+    const anki = createGenericRpcClient(
+        createLocalServerTransport("http://127.0.0.1:50051"),
+        Anki,
+    );
 
     let justAdded: number[] = [];
 
@@ -10,12 +19,18 @@
     $: message, (justAdded = []);
 
     function addToAnki(index: number) {
-        // TODO: Anki integration
         justAdded = [...justAdded, index];
+        anki.saveDefinition(
+            SaveDefinitionRequest.fromJson({
+                scanned: message.scanString,
+                index: reversed.length - index - 1,
+            }),
+        );
     }
 
     function viewInAnki(cid: bigint | undefined) {
-        // TODO: Anki integration
+        const cId = Number(cid);
+        anki.openCard(OpenCardRequest.fromJson({ cId }));
     }
 </script>
 

@@ -1,4 +1,4 @@
-mod anki_connect;
+mod anki;
 pub mod backend;
 mod config;
 mod database;
