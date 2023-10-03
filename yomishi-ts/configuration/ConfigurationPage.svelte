@@ -12,6 +12,8 @@
     import ToggleSetting from "./tiles/ToggleSetting.svelte";
     import { DictionaryListRequest } from "@yomishi-proto/config_pb";
     import { localAddress } from "../rpc/address-manager";
+    import { createConfigDataStore } from "./config-data-store";
+    import SelectSetting from "./tiles/SelectSetting.svelte";
 
     const transport = createLocalServerTransport(localAddress);
 
@@ -26,11 +28,8 @@
                 .sort((a, b) => a[0] - b[0]),
         );
 
-    (async () => {
-        console.log(
-            await configClient.dictionaryList(DictionaryListRequest.fromJson({})),
-        );
-    })();
+    const configData = createConfigDataStore(transport);
+    config("AnkiModelName").subscribe((e) => e.busy || configData.refresh());
 </script>
 
 <ConfigScaffold>
@@ -62,7 +61,7 @@
         </SettingTile>
         <!-- TODO: suggest existing note types / decks -->
         <SettingTile title="Anki Deck name" desc="Deck in which notes will be created.">
-            <TextSetting value={config("AnkiDeckName")} />
+            <SelectSetting value={config("AnkiDeckName")} choices={$configData.decks} />
         </SettingTile>
         <SettingTile
             title="Anki Tag"
@@ -71,7 +70,10 @@
             <TextSetting value={config("AnkiTag")} />
         </SettingTile>
         <SettingTile title="Anki Note Type" desc="Note type used to create notes.">
-            <TextSetting value={config("AnkiModelName")} />
+            <SelectSetting
+                value={config("AnkiModelName")}
+                choices={$configData.models}
+            />
         </SettingTile>
         <!-- TODO: field/value map setting -->
     </Section>

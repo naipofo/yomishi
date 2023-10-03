@@ -46,3 +46,18 @@ pub struct GuiBrowse<'a> {
     pub query: &'a str,
 }
 r!(GuiBrowse<'_>, "guiBrowse", Vec<i64>);
+
+#[derive(Serialize)]
+pub struct DeckNames {}
+r!(DeckNames, "deckNames", Vec<String>);
+
+#[derive(Serialize)]
+pub struct ModelNames {}
+r!(ModelNames, "modelNames", Vec<String>);
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelFieldNames<'a> {
+    pub model_name: &'a str,
+}
+r!(ModelFieldNames<'_>, "modelFieldNames", Vec<String>);

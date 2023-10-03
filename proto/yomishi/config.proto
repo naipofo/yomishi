@@ -7,6 +7,7 @@ service Config {
   rpc PushConfig(PushConfigRequest) returns (PushConfigReply) {}
 
   rpc DictionaryList(DictionaryListRequest) returns (DictionaryListReply) {}
+  rpc AnkiConfigData(AnkiConfigDataRequest) returns (AnkiConfigDataReply) {}
 }
 
 enum CONFIG_TYPE{
@@ -40,4 +41,12 @@ message DictionaryListRequest { }
 
 message DictionaryListReply {
   repeated Dictionary dictionaries = 1;
+}
+
+message AnkiConfigDataRequest { }
+
+message AnkiConfigDataReply {
+  repeated string decks = 1;
+  repeated string models = 2;
+  repeated string current_model_fields = 3;
 }

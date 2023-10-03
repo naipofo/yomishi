@@ -6,6 +6,8 @@ use reqwest::Client;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 
+use crate::error::Result;
+
 pub struct AnkiConnectClient<'a> {
     address: &'a str,
     client: Client,
@@ -24,10 +26,10 @@ impl AnkiConnectClient<'_> {
         }
     }
 
-    pub async fn invoke<T: ConnectAction>(&self, params: &T) -> reqwest::Result<T::Output> {
-        self.invoke_any(params, T::action())
-            .await
-            .map(|e| serde_json::from_value(e).unwrap())
+    pub async fn invoke<T: ConnectAction>(&self, params: &T) -> Result<T::Output> {
+        Ok(serde_json::from_value(
+            self.invoke_any(params, T::action()).await?,
+        )?)
     }
 
     async fn invoke_any<T: Serialize>(&self, data: &T, action: &str) -> reqwest::Result<Value> {

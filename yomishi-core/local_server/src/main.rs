@@ -39,16 +39,13 @@ async fn main() {
                     let method_name = path.remove(0);
 
                     let data = hyper::body::to_bytes(body).await.unwrap().to_vec();
-                    if data.is_empty() {
-                        return Ok::<_, Infallible>(Response::new(Body::from("")));
-                    }
 
-                    let data = mediator.rpc(RcpRequest {
+                    let responce = mediator.rpc(RcpRequest {
                         service,
                         method_name,
                         data,
                     });
-                    let mut r = Response::new(Body::from(data));
+                    let mut r = Response::new(Body::from(responce));
                     r.headers_mut().append(
                         "Access-Control-Allow-Origin",
                         HeaderValue::from_str("*").unwrap(),

@@ -1,13 +1,23 @@
 use std::str::FromStr;
+use std::vec;
 
 use serde_json::Value;
+use yomishi_config::StringKeys::{AnkiConnectAddress, AnkiModelName};
 use yomishi_config::{BooleanKeys, IntegerKeys, SerdeKeys, StringKeys};
 use yomishi_proto::yomishi::config::{
-    Config, ConfigType, Dictionary, DictionaryListReply, DictionaryListRequest, FetchConfigReply,
-    FetchConfigRequest, PushConfigReply, PushConfigRequest,
+    AnkiConfigDataReply, AnkiConfigDataRequest, Config, ConfigType, Dictionary,
+    DictionaryListReply, DictionaryListRequest, FetchConfigReply, FetchConfigRequest,
+    PushConfigReply, PushConfigRequest,
 };
 
-use crate::{backend::Backend, dict::DictIndex};
+use crate::{
+    anki::connect::{
+        actions::{DeckNames, ModelFieldNames, ModelNames},
+        AnkiConnectClient,
+    },
+    backend::Backend,
+    dict::DictIndex,
+};
 
 impl Config for Backend {
     fn fetch_config(&self, data: FetchConfigRequest) -> FetchConfigReply {
@@ -63,6 +73,23 @@ impl Config for Backend {
                 )
                 .collect(),
         }
+    }
+
+    fn anki_config_data(&self, _: AnkiConfigDataRequest) -> AnkiConfigDataReply {
+        self.runtime.block_on(async {
+            let address = self.storage.get_string(AnkiConnectAddress);
+            let client = &AnkiConnectClient::new(&address);
+            AnkiConfigDataReply {
+                decks: client.invoke(&DeckNames {}).await.unwrap(),
+                models: client.invoke(&ModelNames {}).await.unwrap(),
+                current_model_fields: client
+                    .invoke(&ModelFieldNames {
+                        model_name: &self.storage.get_string(AnkiModelName),
+                    })
+                    .await
+                    .unwrap_or(vec![]),
+            }
+        })
     }
 }
 
