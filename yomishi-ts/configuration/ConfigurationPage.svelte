@@ -14,6 +14,7 @@
     import { localAddress } from "../rpc/address-manager";
     import { createConfigDataStore } from "./config-data-store";
     import SelectSetting from "./tiles/SelectSetting.svelte";
+    import FieldMapSetting from "./tiles/FieldMapSetting.svelte";
 
     const transport = createLocalServerTransport(localAddress);
 
@@ -59,7 +60,6 @@
         >
             <TextSetting value={config("AnkiConnectAddress")} />
         </SettingTile>
-        <!-- TODO: suggest existing note types / decks -->
         <SettingTile title="Anki Deck name" desc="Deck in which notes will be created.">
             <SelectSetting value={config("AnkiDeckName")} choices={$configData.decks} />
         </SettingTile>
@@ -75,7 +75,16 @@
                 choices={$configData.models}
             />
         </SettingTile>
-        <!-- TODO: field/value map setting -->
+        <SettingTile
+            title="Anki Note Format"
+            desc="Field mapping for generated notes."
+            wide={true}
+        >
+            <FieldMapSetting
+                value={config("AnkiFields")}
+                fields={$configData.currentModelFields}
+            />
+        </SettingTile>
     </Section>
     <Section title="Popup">
         <SettingTile title="Popup Size" desc="Size of the dictionary popup in pixels.">

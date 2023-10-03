@@ -37,7 +37,9 @@
         &.wide {
             flex-direction: column;
             align-items: stretch;
-            gap: 16px;
+            header {
+                margin-bottom: 16px;
+            }
         }
         &:not(:last-child) {
             border-bottom: 1px solid #cccccc;

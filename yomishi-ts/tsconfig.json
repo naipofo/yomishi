@@ -8,6 +8,6 @@
         },
         "strict": true,
         "strictNullChecks": true,
-        "lib": ["es2017"]
+        "lib": ["es2019"]
     }
 }
