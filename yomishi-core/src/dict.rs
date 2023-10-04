@@ -9,6 +9,8 @@ use serde::Deserialize;
 use serde_json::Value;
 use zip::ZipArchive;
 
+use crate::error::Result;
+
 use self::parser::{
     kanji::Kanji, kanji_meta::KanjiMeta, parse_bank, tag::Tag, term::Term, term_meta::TermMeta,
     FromBank,
@@ -49,12 +51,12 @@ pub fn import_from_directory<F: FnMut(&DictIndex) -> bool>(
         .collect()
 }
 
-pub fn get_index(zip: &mut ZipArchive<File>) -> std::io::Result<DictIndex> {
+pub fn get_index(zip: &mut ZipArchive<File>) -> Result<DictIndex> {
     let mut ob: HashMap<String, Value> =
         serde_json::from_reader(zip.by_name("index.json")?).unwrap();
     let index = DictIndex {
-        title: ob.remove("title").unwrap().to_string(),
-        revision: ob.remove("revision").unwrap().to_string(),
+        title: serde_json::from_value(ob.remove("title").unwrap())?,
+        revision: serde_json::from_value(ob.remove("revision").unwrap())?,
         format: ob
             .get("version")
             .unwrap_or(ob.get("format").unwrap())

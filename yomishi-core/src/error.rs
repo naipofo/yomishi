@@ -7,7 +7,8 @@ pub enum YomishiError {
     Json,
     Request,
     Decode,
-    IOError
+    IOError,
+    Zip,
 }
 
 impl From<serde_json::Error> for YomishiError {
@@ -37,5 +38,11 @@ impl From<prost::DecodeError> for YomishiError {
 impl From<std::io::Error> for YomishiError {
     fn from(_: std::io::Error) -> Self {
         YomishiError::IOError
+    }
+}
+
+impl From<zip::result::ZipError> for YomishiError {
+    fn from(_: zip::result::ZipError) -> Self {
+        YomishiError::Zip
     }
 }
