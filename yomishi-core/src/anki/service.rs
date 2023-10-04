@@ -1,4 +1,6 @@
-use yomishi_config::StringKeys::{AnkiConnectAddress, AnkiDeckName, AnkiModelName};
+use std::vec;
+
+use yomishi_config::StringKeys::{AnkiConnectAddress, AnkiDeckName, AnkiModelName, AnkiTag};
 use yomishi_proto::yomishi::anki::{
     OpenCardReply, OpenCardRequest, SaveDefinitionReply, SaveDefinitionRequest,
 };
@@ -41,10 +43,12 @@ impl yomishi_proto::yomishi::anki::Anki for Backend {
 impl Backend {
     async fn add_to_anki(&self, data: &GlossaryTemplateData) {
         let fields = self.render_anki_fields(data);
+        let tag = self.storage.get_string(AnkiTag);
         let note_model = Note {
             deck_name: &self.storage.get_string(AnkiDeckName),
             model_name: &self.storage.get_string(AnkiModelName),
             fields: &fields.iter().map(|(a, b)| (a.as_str(), b.trim())).collect(),
+            tags: &vec![&tag],
         };
 
         AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress))

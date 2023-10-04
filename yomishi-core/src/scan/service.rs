@@ -38,6 +38,7 @@ impl Backend {
             deck_name: &self.storage.get_string(AnkiDeckName),
             model_name: &self.storage.get_string(AnkiModelName),
             fields: &fields.iter().map(|(a, b)| (a.as_str(), b.trim())).collect(),
+            tags: &vec![],
         };
 
         self.runtime.block_on(async {

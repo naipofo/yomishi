@@ -21,6 +21,7 @@ pub struct Note<'a> {
     pub deck_name: &'a str,
     pub model_name: &'a str,
     pub fields: &'a HashMap<&'a str, &'a str>,
+    pub tags: &'a Vec<&'a str>,
 }
 
 #[derive(Serialize)]
