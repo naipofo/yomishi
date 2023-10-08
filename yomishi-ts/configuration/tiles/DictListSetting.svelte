@@ -11,7 +11,7 @@
 
     const input = (id: number) => (e: { currentTarget: HTMLInputElement }) =>
         value.set(
-            e.currentTarget.checked
+            !e.currentTarget.checked
                 ? [...$value.value, id]
                 : $value.value.filter((e) => e != id),
         );
@@ -19,7 +19,7 @@
 
 {#each labelList as [id, label], i}
     <SettingElement title={`${id}. ${label}`}>
-        <input type="checkbox" {disabled} on:input={input(id)} checked={includes[i]} />
+        <input type="checkbox" {disabled} on:input={input(id)} checked={!includes[i]} />
     </SettingElement>
 {/each}
 {#if labelList.length == 0}

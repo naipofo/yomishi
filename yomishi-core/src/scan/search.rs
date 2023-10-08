@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashSet};
 
 use serde::{Deserialize, Serialize};
+use yomishi_config::SerdeKeys::DictionariesDisabled;
 
 use crate::{
     backend::Backend,
@@ -20,6 +21,7 @@ pub struct SearchResult {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DictionaryTagged<T> {
     pub dictionary: String,
+    pub dictionary_id: i64,
     #[serde(flatten)]
     pub data: T,
 }
@@ -36,7 +38,7 @@ impl Backend {
             .deinflect(text)
             .into_iter()
             .map(|DeinflectionResult(term, meta)| {
-                struct LookupResult(Term, Vec<Tag>, Vec<Tag>, String);
+                struct LookupResult(Term, Vec<Tag>, Vec<Tag>, String, i64);
 
                 fn group_pairs(v: Vec<LookupResult>) -> Vec<Vec<LookupResult>> {
                     #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -56,10 +58,14 @@ impl Backend {
                         .collect()
                 }
 
+                let disabled_dicts: Vec<i64> =
+                    serde_json::from_value(self.storage.get_serde(DictionariesDisabled))?;
+
                 let lookup_raw = self
                     .storage
                     .get_terms(&term)?
                     .into_iter()
+                    .filter(|(_, x)| !disabled_dicts.contains(x))
                     .map(|(term, dict_id)| {
                         let tags = self.storage.get_tag_list(&term.definition_tags, &dict_id)?;
                         let term_tags = self.storage.get_tag_list(&term.term_tags, &dict_id)?;
@@ -69,6 +75,7 @@ impl Backend {
                             tags,
                             term_tags,
                             self.storage.get_dict_by_id(&dict_id)?,
+                            dict_id,
                         ))
                     })
                     .collect::<Result<_>>()?;
@@ -81,18 +88,34 @@ impl Backend {
                         let mut all_tags = HashSet::new();
 
                         let t = &e.get(0).ok_or(YomishiError::Database)?.0;
-                        let term_meta = self.storage.get_term_meta(&t.expression, &t.reading)?;
+                        let term_meta = self
+                            .storage
+                            .get_term_meta(&t.expression, &t.reading)?
+                            .into_iter()
+                            .filter(|DictionaryTagged { dictionary_id, .. }| {
+                                !disabled_dicts.contains(dictionary_id)
+                            })
+                            .collect();
                         Ok(SearchResult {
                             deinflection: meta.clone(),
                             glossaries: e
                                 .into_iter()
-                                .map(|LookupResult(term, tags, global, dictionary)| {
-                                    all_tags.extend(global);
-                                    DictionaryTagged {
-                                        data: TermWithTags { term, tags },
+                                .map(
+                                    |LookupResult(
+                                        term,
+                                        tags,
+                                        global,
                                         dictionary,
-                                    }
-                                })
+                                        dictionary_id,
+                                    )| {
+                                        all_tags.extend(global);
+                                        DictionaryTagged {
+                                            data: TermWithTags { term, tags },
+                                            dictionary,
+                                            dictionary_id,
+                                        }
+                                    },
+                                )
                                 .collect(),
                             tags: all_tags.into_iter().collect(),
                             meta: term_meta,

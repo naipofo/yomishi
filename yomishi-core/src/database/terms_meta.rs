@@ -63,16 +63,20 @@ impl Database {
                 // TODO: nicer filter
                 Some(r) => {
                     if *r == reading {
-                        Some(self.get_dict_by_id(&dict_id).map(|d| (d, e)))
+                        Some(self.get_dict_by_id(&dict_id).map(|d| (dict_id, d, e)))
                     } else {
                         None
                     }
                 }
-                None => Some(self.get_dict_by_id(&dict_id).map(|d| (d, e))),
+                None => Some(self.get_dict_by_id(&dict_id).map(|d| (dict_id, d, e))),
             })
             .collect::<rusqlite::Result<Vec<_>>>()?
             .into_iter()
-            .map(|(dictionary, data)| DictionaryTagged { dictionary, data })
+            .map(|(dictionary_id, dictionary, data)| DictionaryTagged {
+                dictionary,
+                dictionary_id,
+                data,
+            })
             .collect();
 
         Ok(results)
