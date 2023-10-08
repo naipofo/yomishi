@@ -1,6 +1,6 @@
 import { Scan } from "@yomishi-proto/scan_connect";
 import { ScanStringRequest } from "@yomishi-proto/scan_pb";
-import { localAddress } from "../../rpc/address-manager";
+import { localConfigEngine, localKeys } from "../../configuration/engines/local-storage";
 import { createGenericRpcClient } from "../../rpc/generic-client";
 import { createLocalServerTransport } from "../../rpc/transport";
 import { updateFrame } from "./frames";
@@ -10,7 +10,8 @@ console.log("yomishi init!");
 let lastScan = "";
 let isScanning = false;
 
-let rpcTransport = createLocalServerTransport(localAddress);
+let rpcTransport = localConfigEngine.get(localKeys.localServerAddress)
+    .then(e => createLocalServerTransport(e));
 
 document.body.addEventListener("mousemove", async (e) => {
     if (!isScanning) {
@@ -29,7 +30,7 @@ async function scanFromEvent(e: MouseEvent) {
 
         const req = ScanStringRequest.fromJson({ text: lastScan });
 
-        const client = createGenericRpcClient(rpcTransport, Scan);
+        const client = createGenericRpcClient(await rpcTransport, Scan);
 
         const data = await client.scanString(req);
         if (data.results.length > 0) {

@@ -4,7 +4,7 @@ import { writable } from "svelte/store";
 import { createGenericRpcClient } from "../rpc/generic-client";
 import { RpcTransport } from "../rpc/transport";
 
-export function createConfigDataStore(transport: RpcTransport) {
+export function createConfigHelperStore(transport: RpcTransport) {
     const { set, subscribe } = writable(new AnkiConfigDataReply());
     const client = createGenericRpcClient(transport, Config);
 

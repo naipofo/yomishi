@@ -3,6 +3,9 @@
     "name": "Yomishi",
     "description": "Yomishi web extension",
     "version": "1.0",
+    "permissions": [
+        "storage"
+    ],
     "action": {
         "default_popup": "action-popup.html"
     },

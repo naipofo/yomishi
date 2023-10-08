@@ -4,11 +4,16 @@
     import { createGenericRpcClient } from "../rpc/generic-client";
     import { createLocalServerTransport } from "../rpc/transport";
     import { OpenCardRequest, SaveDefinitionRequest } from "@yomishi-proto/anki_pb";
-    import { localAddress } from "../rpc/address-manager";
+    import {
+        localKeys,
+        localConfigEngine,
+    } from "../configuration/engines/local-storage";
 
     export let message: ScanMessage;
 
-    const anki = createGenericRpcClient(createLocalServerTransport(localAddress), Anki);
+    const anki = localConfigEngine
+        .get(localKeys.localServerAddress)
+        .then((e) => createGenericRpcClient(createLocalServerTransport(e), Anki));
 
     let justAdded: number[] = [];
 
@@ -16,9 +21,12 @@
     $: reversed = message.data.results.reverse();
     $: message, (justAdded = []);
 
-    function addToAnki(index: number) {
+    // TODO: Anki button state for loading
+    async function addToAnki(index: number) {
         justAdded = [...justAdded, index];
-        anki.saveDefinition(
+        await (
+            await anki
+        ).saveDefinition(
             SaveDefinitionRequest.fromJson({
                 scanned: message.scanString,
                 index: reversed.length - index - 1,
@@ -26,9 +34,9 @@
         );
     }
 
-    function viewInAnki(cid: bigint | undefined) {
+    async function viewInAnki(cid: bigint | undefined) {
         const cId = Number(cid);
-        anki.openCard(OpenCardRequest.fromJson({ cId }));
+        await (await anki).openCard(OpenCardRequest.fromJson({ cId }));
     }
 </script>
 

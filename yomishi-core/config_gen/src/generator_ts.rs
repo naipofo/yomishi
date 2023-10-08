@@ -1,57 +1,44 @@
-use crate::{ConfigData, ConfigEntry, ConfigType, SerdeTypes};
+use crate::{ConfigData, ConfigType};
 
 pub fn generate_source_ts(data: ConfigData) -> String {
     let mut buf = String::new();
 
-    buf.push_str(r#"
-    import { JsonValue } from "@bufbuild/protobuf";
+    buf.push_str(
+        r#"
     import { CONFIG_TYPE } from "../ts-protos/config_pb";
-    
-    export type ConfigInterfaceSpec<V extends JsonValue, Keys extends readonly string[], N extends string> = {
-        name: N;
+
+    export interface ConfigKey<T> {
+        name: string;
+        default: T;
+    }
+    export interface ProtoTyped{
         type: CONFIG_TYPE;
-        defaultValues: {
-            [K in Keys[number]]: V;
-        };
-    };"#);
-
-    for (config_type, entries) in &data {
-        let lowercase_name = <&ConfigType as Into<&'static str>>::into(config_type).to_lowercase();
-        let enum_name = format!("{}Keys", lowercase_name);
-
-        buf.push_str(&format!("export const {enum_name} = [",));
-        for key in entries {
-            buf.push_str(&format!("\"{}\",", key.name));
-        }
-        buf.push_str("] as const;\n");
-
-        buf.push_str(&format!(
-            r#"
-        export const {lowercase_name}InterfaceConfig: ConfigInterfaceSpec<{ts},typeof {enum_name}, "{ts}"> = {{
-            name: "{ts}",
-            type: CONFIG_TYPE.{prot},
-            defaultValues: {{"#,
-            ts = config_type.ts_type(),
-            prot = config_type.proto_enum_name()
-        ));
-        for ConfigEntry { name, default, .. } in entries {
-            buf.push_str(&format!(
-                "\"{name}\": {},",
-                config_type.ts_value_build(default)
-            ));
-        }
-        buf.push_str("}} as const;\n");
-        if let ConfigType::Serde = config_type {
-            buf.push_str("export type serdeType<K extends typeof serdeKeys[number]> = ");
-            for ConfigEntry { name, types, .. } in entries {
-                if let Some(SerdeTypes { ts_type, .. }) = types {
-                    buf.push_str(&format!("K extends \"{name}\" ? {ts_type} :",));
-                }
-            }
-            buf.push_str("never;\n");
-        }
     }
 
+    export const rpcKeys = {
+    "#,
+    );
+    for (config_type, entries) in &data {
+        for entry in entries {
+            let ts_type = match &entry.types {
+                Some(t) => t.ts_type.to_string(),
+                None => config_type.ts_type().to_string(),
+            };
+
+            buf.push_str(&format!(
+                "{name}:{{
+                    name: \"{name}\" as const,
+                    default: {default},
+                    type: CONFIG_TYPE.{proto},
+            }} as ConfigKey<{ts_type}> & ProtoTyped & {{ name: \"{name}\" }},
+            ",
+                name = entry.name, // TODO: first letter lowercase
+                default = config_type.ts_value_build(&entry.default),
+                proto = config_type.proto_enum_name()
+            ));
+        }
+    }
+    buf.push_str("} ;\n");
     buf
 }
 

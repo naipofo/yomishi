@@ -1,6 +1,5 @@
 import { type Readable, writable } from "svelte/store";
-import { ConfigKeys, ConfigType, createConfigRpc } from "../rpc/config-client";
-import { RpcTransport } from "../rpc/transport";
+import { ConfigEngine, NamedKey } from "./engines";
 
 export type ApiStore<T> =
     & Readable<ConfigValue<T>>
@@ -14,33 +13,30 @@ export type ConfigValue<T> = {
     value: T;
 };
 
-export function createConfigStoreProvider(
-    transport: RpcTransport,
-) {
-    const client = createConfigRpc(transport);
-    const stores: { [K in ConfigKeys]?: ApiStore<ConfigType<K>> } = {};
+export const createStoreGenerator = <Keys>(engine: ConfigEngine<Keys>) => {
+    const stores: Record<string, ApiStore<any>> = {};
 
-    const makeStore = <Key extends ConfigKeys>(key: Key): ApiStore<ConfigType<Key>> => {
-        const { set, update, subscribe } = writable({
+    const makeStore = <Value>(key: NamedKey<Value, Keys>): ApiStore<Value> => {
+        const { set, subscribe } = writable({
             busy: true,
-            value: client.default(key),
+            value: engine.default(key),
         });
 
-        client.get(key).then(e =>
+        engine.get(key).then(e =>
             set({
                 busy: false,
                 value: e,
             })
         );
 
-        const store = {
+        const store: ApiStore<Value> = {
             subscribe,
-            set: (value: ConfigType<Key>) => {
+            set: (value) => {
                 set({
                     busy: true,
                     value,
                 });
-                client.set(key, value).then(() => {
+                engine.set(key, value).then(() => {
                     set({
                         busy: false,
                         value,
@@ -48,14 +44,11 @@ export function createConfigStoreProvider(
                 });
             },
         };
-        (stores as any)[key] = store;
+        stores[key.name] = store;
         return store;
     };
 
-    return <Key extends ConfigKeys>(key: Key) => {
-        if (!stores[key]) {
-            console.log("creating store", key);
-        }
-        return stores[key] || makeStore(key);
+    return <V>(key: NamedKey<V, Keys>): ApiStore<V> => {
+        return stores[key.name] || makeStore(key);
     };
-}
+};
