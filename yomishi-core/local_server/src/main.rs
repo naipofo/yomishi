@@ -2,7 +2,7 @@ mod connect;
 
 use std::{convert::Infallible, net::SocketAddr, sync::Arc};
 
-use http::HeaderValue;
+use http::{HeaderValue, Method};
 use hyper::{
     service::{make_service_fn, service_fn},
     Body, Request, Response, Server,
@@ -26,6 +26,20 @@ async fn main() {
                 let mediator = mediator.clone();
                 async move {
                     let (h, body) = req.into_parts();
+
+                    if h.method == Method::OPTIONS {
+                        let mut r = Response::new(Body::from(vec![]));
+                        // TODO: same headers for all requests
+                        r.headers_mut().append(
+                            "Access-Control-Allow-Origin",
+                            HeaderValue::from_str("*").unwrap(),
+                        );
+                        r.headers_mut().append(
+                            "Access-Control-Allow-Private-Network",
+                            HeaderValue::from_str("true").unwrap(),
+                        );
+                        return Ok::<_, Infallible>(r);
+                    }
 
                     let mut path: Vec<_> = h
                         .uri

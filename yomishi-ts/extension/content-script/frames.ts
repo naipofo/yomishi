@@ -1,4 +1,8 @@
+import { rpcKeys } from "@yomishi-config/config";
 import { ScanStringReply } from "@yomishi-proto/scan_pb";
+import { createConfigRpcEngine } from "../../configuration/engines/config-rpc";
+import { localConfigEngine, localKeys } from "../../configuration/engines/local-storage";
+import { createLocalServerTransport } from "../../rpc/transport";
 import { browser } from "../browser-extension";
 
 // TODO: proper API between script and iframe
@@ -8,15 +12,15 @@ export type ScanMessage = {
     scanString: string;
 };
 
-const height = 300;
-const width = 600;
+const config = localConfigEngine.get(localKeys.localServerAddress)
+    .then(e => createConfigRpcEngine(createLocalServerTransport(e)));
 
 function createFrame() {
     const frame = document.createElement("iframe");
     frame.src = browser.runtime.getURL("/popup.html");
     frame.setAttribute(
         "style",
-        `width: ${width}px; height: ${height}px; position: absolute; z-index: 999; box-sizing: border-box;`,
+        `width: 600px; height: 400px; position: absolute; z-index: 999; box-sizing: border-box;`,
     );
     document.body.insertAdjacentElement("beforeend", frame);
     return frame;
@@ -24,7 +28,20 @@ function createFrame() {
 
 let frame: HTMLIFrameElement | null = null;
 
-export function updateFrame(data: ScanMessage, scanRect: DOMRect) {
+export async function updateFrame(data: ScanMessage, scanRect: DOMRect) {
+    const bodyRect = document.body.getBoundingClientRect();
+
+    const width = Math.min(
+        await (await config).get(rpcKeys.PopupWidth),
+        // TODO: only reload when configuration changed
+        bodyRect.width,
+    );
+    // TODO: height should be constrained to space, not body height
+    const height = Math.min(
+        await (await config).get(rpcKeys.PopupHeight),
+        bodyRect.height,
+    );
+
     if (frame == null) {
         frame = createFrame();
     }
@@ -33,12 +50,17 @@ export function updateFrame(data: ScanMessage, scanRect: DOMRect) {
     const showAbove = below < height && scanRect.y > below;
 
     const y = showAbove ? scanRect.y + window.scrollY - height : scanRect.y + scanRect.height + window.scrollY;
-    const x = Math.min(scanRect.x, document.body.getBoundingClientRect().width - width);
+    const x = Math.min(scanRect.x, bodyRect.width - width);
+
+    frame.contentWindow?.postMessage(data, "*");
 
     frame.style.left = x + "px";
     frame.style.top = y + "px";
+
+    frame.style.width = width + "px";
+    frame.style.height = height + "px";
+
     frame.style.display = "block";
-    frame.contentWindow?.postMessage(data, "*");
 }
 
 document.addEventListener("keydown", e => {

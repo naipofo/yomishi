@@ -95,8 +95,8 @@
 <Section title="Popup">
     <SettingTile title="Popup Size" desc="Size of the dictionary popup in pixels.">
         <DimensionsSetting
-            x={config(rpcKeys.PopupHeight)}
-            y={config(rpcKeys.PopupWidth)}
+            x={config(rpcKeys.PopupWidth)}
+            y={config(rpcKeys.PopupHeight)}
             min={100}
             max={10000}
             size={true}
