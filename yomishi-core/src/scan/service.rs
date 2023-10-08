@@ -1,11 +1,14 @@
-use std::vec;
+use std::collections::HashMap;
 
-use yomishi_config::StringKeys::{AnkiConnectAddress, AnkiDeckName, AnkiModelName};
+use yomishi_config::{
+    SerdeKeys::AnkiFields,
+    StringKeys::{AnkiConnectAddress, AnkiDeckName, AnkiModelName},
+};
 use yomishi_proto::yomishi::scan::{Scan, ScanResult, ScanStringReply, ScanStringRequest};
 
 use crate::{
     anki::connect::{
-        actions::{CanAddNotes, Note},
+        actions::{CanAddNotes, FindNotes, Note},
         AnkiConnectClient,
     },
     backend::Backend,
@@ -31,8 +34,7 @@ impl Scan for Backend {
 impl Backend {
     fn data_to_result(&self, data: GlossaryTemplateData) -> Result<ScanResult> {
         let content = HandlebarsRenderer::new().render_glossary(&data);
-        // TODO: maybe defer it to reduce scan time?
-
+        // TODO: defer ankiconnect calls to reduce scan time
         let fields = self.render_anki_fields(&data);
         let note_model = Note {
             deck_name: &self.storage.get_string(AnkiDeckName),
@@ -51,7 +53,26 @@ impl Backend {
                     .await
                     .unwrap()
                     .remove(0),
-                card_id: None,
+                card_id: AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress))
+                    .invoke(&FindNotes {
+                        query: &format!(
+                            "{}:{}",
+                            serde_json::from_value::<HashMap<String, String>>(
+                                self.storage.get_serde(AnkiFields)
+                            )?
+                            .into_iter()
+                            .find(|(_, value)| value == "Expression")
+                            .map(|(key, _)| key)
+                            .unwrap_or("Expression".to_string()),
+                            HandlebarsRenderer::new()
+                                .render_marker("expression", data)
+                                .trim()
+                        ),
+                    })
+                    .await
+                    .unwrap()
+                    .first()
+                    .copied(),
             })
         })
     }
