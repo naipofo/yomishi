@@ -14,3 +14,9 @@
         <option value={choice}>{choice}</option>
     {/each}
 </select>
+
+<style>
+    select {
+        max-width: 300px;
+    }
+</style>
