@@ -1,5 +1,6 @@
 import { rpcKeys } from "@yomishi-config/config";
 import { ScanStringReply } from "@yomishi-proto/scan_pb";
+import { cachedEngine } from "../../configuration/engines/cached";
 import { createConfigRpcEngine } from "../../configuration/engines/config-rpc";
 import { localConfigEngine, localKeys } from "../../configuration/engines/local-storage";
 import { createLocalServerTransport } from "../../rpc/transport";
@@ -13,7 +14,7 @@ export type ScanMessage = {
 };
 
 const config = localConfigEngine.get(localKeys.localServerAddress)
-    .then(e => createConfigRpcEngine(createLocalServerTransport(e)));
+    .then(e => cachedEngine(createConfigRpcEngine(createLocalServerTransport(e))));
 
 function createFrame() {
     const frame = document.createElement("iframe");
