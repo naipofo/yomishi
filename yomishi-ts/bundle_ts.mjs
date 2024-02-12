@@ -8,4 +8,5 @@ build({
     entryPoints: [entrypoint],
     outfile: bundle_js,
     target: ["es6", "chrome77"],
+    sourcemap: "inline",
 });

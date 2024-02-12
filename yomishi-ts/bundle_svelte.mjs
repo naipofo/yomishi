@@ -26,4 +26,5 @@ build({
             preprocess: [sveltePreprocess({ typescript: true, sourceMap: true })],
         }),
     ],
+    sourcemap: "inline",
 });
