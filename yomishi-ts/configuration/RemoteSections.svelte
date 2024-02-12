@@ -1,20 +1,20 @@
 <script lang="ts">
-    import { DictionaryListRequest } from "@yomishi-proto/config_pb";
-    import { createGenericRpcClient } from "../rpc/generic-client";
-    import { RpcTransport } from "../rpc/transport";
+    import { rpcKeys } from "@yomishi-config/config";
     import { Config } from "@yomishi-proto/config_connect";
+    import { DictionaryListRequest } from "@yomishi-proto/config_pb";
+    import { createGenericRpcClient } from "../rpc/grcp/generic-client";
+    import { RpcTransport } from "../rpc/grcp/transport";
     import Section from "./Section.svelte";
-    import DimensionsSetting from "./tiles/DimensionsSetting.svelte";
-    import SettingTile from "./tiles/SettingTile.svelte";
-    import TextSetting from "./tiles/TextSetting.svelte";
-    import ToggleListSetting from "./tiles/DictListSetting.svelte";
-    import ToggleSetting from "./tiles/ToggleSetting.svelte";
-    import SelectSetting from "./tiles/SelectSetting.svelte";
-    import FieldMapSetting from "./tiles/FieldMapSetting.svelte";
+    import { createConfigHelperStore } from "./config-helper-store";
     import { createStoreGenerator } from "./config-store";
     import { createConfigRpcEngine } from "./engines/config-rpc";
-    import { createConfigHelperStore } from "./config-helper-store";
-    import { rpcKeys } from "@yomishi-config/config";
+    import ToggleListSetting from "./tiles/DictListSetting.svelte";
+    import DimensionsSetting from "./tiles/DimensionsSetting.svelte";
+    import FieldMapSetting from "./tiles/FieldMapSetting.svelte";
+    import SelectSetting from "./tiles/SelectSetting.svelte";
+    import SettingTile from "./tiles/SettingTile.svelte";
+    import TextSetting from "./tiles/TextSetting.svelte";
+    import ToggleSetting from "./tiles/ToggleSetting.svelte";
 
     export let transport: RpcTransport;
 

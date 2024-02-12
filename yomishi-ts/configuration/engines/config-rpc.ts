@@ -1,8 +1,8 @@
 import { ConfigKey, ProtoTyped, rpcKeys } from "@yomishi-config/config";
 import { Config } from "@yomishi-proto/config_connect";
 import { FetchConfigRequest, PushConfigRequest } from "@yomishi-proto/config_pb";
-import { createGenericRpcClient } from "../../rpc/generic-client";
-import { RpcTransport } from "../../rpc/transport";
+import { createGenericRpcClient } from "../../rpc/grcp/generic-client";
+import { RpcTransport } from "../../rpc/grcp/transport";
 import { ConfigEngine } from ".";
 
 // TODO: fetch multiple values from the server at once

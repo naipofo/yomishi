@@ -3,7 +3,7 @@ import { ScanStringReply } from "@yomishi-proto/scan_pb";
 import { cachedEngine } from "../../configuration/engines/cached";
 import { createConfigRpcEngine } from "../../configuration/engines/config-rpc";
 import { localConfigEngine, localKeys } from "../../configuration/engines/local-storage";
-import { createLocalServerTransport } from "../../rpc/transport";
+import { createLocalServerTransport } from "../../rpc/grcp/transport";
 import { browser } from "../browser-extension";
 
 // TODO: proper API between script and iframe

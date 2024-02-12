@@ -1,8 +1,8 @@
 import { Config } from "@yomishi-proto/config_connect";
 import { AnkiConfigDataReply, AnkiConfigDataRequest } from "@yomishi-proto/config_pb";
 import { writable } from "svelte/store";
-import { createGenericRpcClient } from "../rpc/generic-client";
-import { RpcTransport } from "../rpc/transport";
+import { createGenericRpcClient } from "../rpc/grcp/generic-client";
+import { RpcTransport } from "../rpc/grcp/transport";
 
 export function createConfigHelperStore(transport: RpcTransport) {
     const { set, subscribe } = writable(new AnkiConfigDataReply());

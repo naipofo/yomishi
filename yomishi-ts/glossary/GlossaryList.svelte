@@ -6,9 +6,9 @@
         localKeys,
     } from "../configuration/engines/local-storage";
     import { ScanMessage } from "../extension/content-script/frames";
-    import { backendClient } from "../extension/worker/client";
-    import { createGenericRpcClient } from "../rpc/generic-client";
-    import { createLocalServerTransport } from "../rpc/transport";
+    import { workerClient } from "../extension/worker/client";
+    import { createGenericRpcClient } from "../rpc/grcp/generic-client";
+    import { createLocalServerTransport } from "../rpc/grcp/transport";
 
     export let message: ScanMessage;
 
@@ -25,7 +25,7 @@
     // TODO: Anki button state for loading
     async function addToAnki(index: number) {
         justAdded = [...justAdded, index];
-        await backendClient.addToAnki(
+        await workerClient.addToAnki(
             message.scanString,
             reversed.length - index - 1,
             "seltest",

@@ -1,8 +1,8 @@
 import { Scan } from "@yomishi-proto/scan_connect";
 import { ScanStringRequest } from "@yomishi-proto/scan_pb";
 import { localConfigEngine, localKeys } from "../../configuration/engines/local-storage";
-import { createGenericRpcClient } from "../../rpc/generic-client";
-import { createLocalServerTransport } from "../../rpc/transport";
+import { createGenericRpcClient } from "../../rpc/grcp/generic-client";
+import { createLocalServerTransport } from "../../rpc/grcp/transport";
 import { updateFrame } from "./frames";
 
 console.log("yomishi init!");

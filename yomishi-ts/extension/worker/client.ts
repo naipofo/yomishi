@@ -1,14 +1,4 @@
-import { BackendHandler, BackendRequest } from ".";
+import { createClient } from "../../rpc/chrome-simple";
+import { workerReceiver } from "./receiver";
 
-export const backendClient = new Proxy({}, {
-    get(_, p: keyof BackendHandler) {
-        return (...args: any[]) => {
-            return new Promise((resolve) => {
-                chrome.runtime.sendMessage({
-                    method: p,
-                    args,
-                } as BackendRequest, resolve);
-            });
-        };
-    },
-}) as BackendHandler;
+export const workerClient = createClient(workerReceiver);

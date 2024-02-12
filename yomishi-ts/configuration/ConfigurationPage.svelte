@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { createLocalServerTransport } from "../rpc/transport";
+    import { createLocalServerTransport } from "../rpc/grcp/transport";
     import ConfigScaffold from "./ConfigScaffold.svelte";
     import RemoteSections from "./RemoteSections.svelte";
     import Section from "./Section.svelte";
+    import { createStoreGenerator } from "./config-store";
+    import { localConfigEngine, localKeys } from "./engines/local-storage";
     import SettingTile from "./tiles/SettingTile.svelte";
     import TextSetting from "./tiles/TextSetting.svelte";
-    import { createStoreGenerator } from "./config-store";
-    import { localKeys, localConfigEngine } from "./engines/local-storage";
 
     const config = createStoreGenerator(localConfigEngine);
 
