@@ -10,7 +10,12 @@ service Anki {
 message SaveDefinitionRequest {
   string scanned = 1;
   int32 index = 2;
-  // TODO: something that makes more sence?
+  ClientState state = 3;
+}
+
+message ClientState {
+  string clipboard = 1;
+  string selection = 2;
 }
 
 message SaveDefinitionReply { }

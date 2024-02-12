@@ -1,13 +1,14 @@
 <script lang="ts">
     import { Anki } from "@yomishi-proto/anki_connect";
+    import { OpenCardRequest } from "@yomishi-proto/anki_pb";
+    import {
+        localConfigEngine,
+        localKeys,
+    } from "../configuration/engines/local-storage";
     import { ScanMessage } from "../extension/content-script/frames";
+    import { backendClient } from "../extension/worker/client";
     import { createGenericRpcClient } from "../rpc/generic-client";
     import { createLocalServerTransport } from "../rpc/transport";
-    import { OpenCardRequest, SaveDefinitionRequest } from "@yomishi-proto/anki_pb";
-    import {
-        localKeys,
-        localConfigEngine,
-    } from "../configuration/engines/local-storage";
 
     export let message: ScanMessage;
 
@@ -24,13 +25,10 @@
     // TODO: Anki button state for loading
     async function addToAnki(index: number) {
         justAdded = [...justAdded, index];
-        await (
-            await anki
-        ).saveDefinition(
-            SaveDefinitionRequest.fromJson({
-                scanned: message.scanString,
-                index: reversed.length - index - 1,
-            }),
+        await backendClient.addToAnki(
+            message.scanString,
+            reversed.length - index - 1,
+            "seltest",
         );
     }
 

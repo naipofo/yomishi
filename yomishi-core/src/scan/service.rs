@@ -35,7 +35,7 @@ impl Backend {
     fn data_to_result(&self, data: GlossaryTemplateData) -> Result<ScanResult> {
         let content = HandlebarsRenderer::new().render_glossary(&data);
         // TODO: defer ankiconnect calls to reduce scan time
-        let fields = self.render_anki_fields(&data);
+        let fields = self.render_anki_fields(&data, &None);
         let note_model = Note {
             deck_name: &self.storage.get_string(AnkiDeckName),
             model_name: &self.storage.get_string(AnkiModelName),

@@ -2,7 +2,7 @@ use std::vec;
 
 use yomishi_config::StringKeys::{AnkiConnectAddress, AnkiDeckName, AnkiModelName, AnkiTag};
 use yomishi_proto::yomishi::anki::{
-    OpenCardReply, OpenCardRequest, SaveDefinitionReply, SaveDefinitionRequest,
+    ClientState, OpenCardReply, OpenCardRequest, SaveDefinitionReply, SaveDefinitionRequest,
 };
 
 use crate::{
@@ -18,12 +18,16 @@ use super::connect::{
 impl yomishi_proto::yomishi::anki::Anki for Backend {
     fn save_definition(
         &self,
-        SaveDefinitionRequest { scanned, index }: SaveDefinitionRequest,
+        SaveDefinitionRequest {
+            scanned,
+            index,
+            state,
+        }: SaveDefinitionRequest,
     ) -> SaveDefinitionReply {
-        self.runtime
-            .block_on(self.add_to_anki(&search_to_template_data(
-                self.search(&scanned).unwrap().remove(index as usize),
-            )));
+        self.runtime.block_on(self.add_to_anki(
+            &search_to_template_data(self.search(&scanned).unwrap().remove(index as usize)),
+            &state,
+        ));
         SaveDefinitionReply {}
     }
 
@@ -41,8 +45,8 @@ impl yomishi_proto::yomishi::anki::Anki for Backend {
     }
 }
 impl Backend {
-    async fn add_to_anki(&self, data: &GlossaryTemplateData) {
-        let fields = self.render_anki_fields(data);
+    async fn add_to_anki(&self, data: &GlossaryTemplateData, state: &Option<ClientState>) {
+        let fields = self.render_anki_fields(data, state);
         let tag = self.storage.get_string(AnkiTag);
         let note_model = Note {
             deck_name: &self.storage.get_string(AnkiDeckName),
