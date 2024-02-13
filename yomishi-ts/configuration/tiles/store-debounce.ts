@@ -7,9 +7,13 @@ export function debounceToStore<T = string>(
     const timeout = 650;
     let h = 0;
     let callable = (e: { currentTarget: HTMLInputElement }) => {
+        window.onbeforeunload = () => "Settings are not saved yet, please wait a second!";
         clearTimeout(h);
         let val = e.currentTarget.value;
-        h = setTimeout(() => store.set(transform(val)), timeout);
+        h = setTimeout(() => {
+            window.onbeforeunload = null;
+            store.set(transform(val));
+        }, timeout);
     };
     return callable;
 }
