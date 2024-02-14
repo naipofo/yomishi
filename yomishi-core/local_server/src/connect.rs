@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     rc::Rc,
     sync::{
         mpsc::{self, Receiver, Sender},
@@ -8,7 +7,15 @@ use std::{
     thread,
 };
 
-use yomishi_proto::yomishi::{anki::AnkiServer, config::ConfigServer, scan::ScanServer};
+use tokio::runtime::Runtime;
+use yomishi_proto::{
+    yomishi::{
+        anki::{Anki, AnkiServer},
+        config::{Config, ConfigServer},
+        scan::{Scan, ScanServer},
+    },
+    ProtoService,
+};
 
 pub struct RcpRequest {
     pub service: String,
@@ -16,26 +23,6 @@ pub struct RcpRequest {
     pub data: Vec<u8>,
 }
 
-struct RcpResolver(HashMap<String, Rc<dyn yomishi_proto::ProtoService>>);
-
-impl RcpResolver {
-    fn new() -> Self {
-        RcpResolver(HashMap::new())
-    }
-    fn add(&mut self, s: Rc<dyn yomishi_proto::ProtoService>) {
-        self.0.insert(s.name().to_string(), s);
-    }
-    fn execute(
-        &self,
-        RcpRequest {
-            service,
-            method_name,
-            data,
-        }: RcpRequest,
-    ) -> Vec<u8> {
-        self.0.get(&service).unwrap().execute(&method_name, &data)
-    }
-}
 pub struct RpcMediator(Mutex<RpcMediatorInner>);
 
 struct RpcMediatorInner {
@@ -64,22 +51,44 @@ impl RpcMediator {
     }
 }
 fn resolver_thread(rx: mpsc::Receiver<RcpRequest>, tx: mpsc::Sender<Vec<u8>>) {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .worker_threads(1)
+        .enable_all()
+        .build()
+        .unwrap();
+
     // TODO: move this somewhere else
-    let backend = Rc::new(yomishi::backend::Backend::new().unwrap());
-    let mut resolver = RcpResolver::new();
-
-    let scan = Rc::new(ScanServer(backend.clone()));
-    resolver.add(scan.clone());
-
-    let config = Rc::new(ConfigServer(backend.clone()));
-    resolver.add(config.clone());
-
-    let anki = Rc::new(AnkiServer(backend.clone()));
-    resolver.add(anki.clone());
+    let backend = Rc::new(runtime.block_on(yomishi::backend::Backend::new()).unwrap());
+    // let mut resolver = RcpResolver::new();
 
     loop {
         let a = rx.recv().unwrap();
-        let data = resolver.execute(a);
+        let data = execute(
+            backend.clone(),
+            &a.service,
+            &a.method_name,
+            &a.data,
+            &runtime,
+        );
+
         tx.send(data).unwrap();
     }
+}
+
+fn execute<T>(bc: Rc<T>, service: &str, metod: &str, data: &[u8], runtime: &Runtime) -> Vec<u8>
+where
+    T: Scan + Anki + Config,
+{
+    let scan: ScanServer<T> = ScanServer(bc.clone());
+    let anki = AnkiServer(bc.clone());
+    let config = ConfigServer(bc.clone());
+
+    runtime.block_on(async {
+        match service {
+            "Scan" => scan.execute(metod, data).await,
+            "Anki" => anki.execute(metod, data).await,
+            "Config" => config.execute(metod, data).await,
+            _ => panic!(),
+        }
+    })
 }

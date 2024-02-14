@@ -27,7 +27,7 @@ impl ServiceGenerator for ServiceGen {
         {
             writeln!(
                 buf,
-                "fn {name}(&self, data: {input_type}) -> {output_type};\n"
+                "async fn {name}(&self, data: {input_type}) -> {output_type};\n"
             )
             .unwrap();
         }
@@ -46,7 +46,7 @@ impl ServiceGenerator for ServiceGen {
         )
         .unwrap();
 
-        buf.push_str("fn execute(&self, method_name: &str, data: &[u8]) -> Vec<u8>{");
+        buf.push_str("async fn execute(&self, method_name: &str, data: &[u8]) -> Vec<u8>{");
         buf.push_str("match method_name{");
         for Method {
             name,
@@ -57,7 +57,7 @@ impl ServiceGenerator for ServiceGen {
         {
             writeln!(
                 buf,
-                "\"{proto_name}\" => self.0.{name}({input_type}::decode(data).unwrap()).encode_to_vec(), "
+                "\"{proto_name}\" => self.0.{name}({input_type}::decode(data).unwrap()).await.encode_to_vec(), "
             )
             .unwrap();
         }

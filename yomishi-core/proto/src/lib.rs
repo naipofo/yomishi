@@ -10,8 +10,9 @@ pub mod yomishi {
     }
 }
 
+#[allow(async_fn_in_trait)]
 pub trait ProtoService {
     // TODO: use index instead of str
-    fn execute(&self, method_name: &str, data: &[u8]) -> Vec<u8>;
+    async fn execute(&self, method_name: &str, data: &[u8]) -> Vec<u8>;
     fn name(&self) -> &'static str;
 }

@@ -52,9 +52,3 @@ CREATE TABLE IF NOT EXISTS tags(
     dictionary INTEGER NOT NULL,
     FOREIGN KEY(dictionary) REFERENCES dictionaries(id)
 );
-
-CREATE TABLE IF NOT EXISTS config(
-    id INTEGER PRIMARY KEY,
-    key TEXT NOT NULL,
-    value TEXT NOT NULL
-);

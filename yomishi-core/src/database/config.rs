@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use yomishi_config::{BooleanKeys, IntegerKeys, SerdeKeys, StringKeys};
 
@@ -5,30 +6,35 @@ use crate::error::Result;
 
 use super::Database;
 
+#[derive(Debug, Deserialize)]
+struct SurConfig {
+    value: String,
+}
+
+#[derive(Debug, Serialize)]
+struct SurUpdateConfig<'a> {
+    value: &'a str,
+}
+
 impl Database {
     // TODO: different result for db error / no value
-    pub fn get_generic(&self, key: &str) -> Result<Value> {
-        Ok(serde_json::from_str(
-            &self
-                .conn
-                .prepare(
-                    "SELECT value, id
-                    FROM config
-                    WHERE key = ?
-					ORDER BY id DESC",
-                )?
-                .query_row([key], |row| row.get::<_, String>(0))?,
-        )?)
+    pub async fn get_generic(&self, key: &str) -> Result<Value> {
+        let a: Option<SurConfig> = self
+            .s_conn
+            .select(("config", key))
+            .await
+            .map_err(|_| crate::error::YomishiError::Database)?;
+        let value = a.ok_or(crate::error::YomishiError::Database)?;
+        Ok(serde_json::from_str(&value.value).unwrap())
     }
 
-    pub fn set_generic(&self, key: &str, value: &str) -> Result<()> {
-        self.conn
-            .prepare(
-                "INSERT OR REPLACE
-                    INTO config(key, value)
-                    VALUES (?, ?)",
-            )?
-            .execute([key, value])?;
+    pub async fn set_generic(&self, key: &str, value: &str) -> Result<()> {
+        let _: Option<SurConfig> = self
+            .s_conn
+            .update(("config", key))
+            .content(SurUpdateConfig { value })
+            .await
+            .unwrap();
         Ok(())
     }
 }
@@ -36,13 +42,15 @@ impl Database {
 macro_rules! config_impl {
     ($r_type:ty, $set:ident, $get:ident, $keys:ty) => {
         impl Database {
-            pub fn $get(&self, key: $keys) -> $r_type {
+            pub async fn $get(&self, key: $keys) -> $r_type {
                 self.get_generic((&key).into())
+                    .await
                     .map(|e| serde_json::from_value(e).unwrap())
                     .unwrap_or(key.default_value())
             }
-            pub fn $set(&self, key: $keys, value: $r_type) -> Result<()> {
+            pub async fn $set(&self, key: $keys, value: $r_type) -> Result<()> {
                 self.set_generic((&key).into(), &serde_json::to_string(&value)?)
+                    .await
             }
         }
     };

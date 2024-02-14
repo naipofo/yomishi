@@ -5,7 +5,8 @@ use crate::{
         term::{GlossaryDetailed, GlossaryEntry},
         term_meta::TermMeta,
     },
-    japanese::ruby::{try_from_reading, Segment}, scan::search::{DictionaryTagged, TermWithTags, SearchResult},
+    japanese::ruby::{try_from_reading, Segment},
+    scan::search::{DictionaryTagged, SearchResult, TermWithTags},
 };
 
 use handlebars::{handlebars_helper, Handlebars};
@@ -164,8 +165,8 @@ pub fn search_to_template_data(result: SearchResult) -> GlossaryTemplateData {
 
     GlossaryTemplateData {
         ruby: try_from_reading(
-            glossaries.get(0).unwrap().data.term.expression.to_string(),
-            glossaries.get(0).unwrap().data.term.reading.to_string(),
+            glossaries.first().unwrap().data.term.expression.to_string(),
+            glossaries.first().unwrap().data.term.reading.to_string(),
         ),
         inflection_rules: deinflection.reasons.iter().map(|e| e.to_string()).collect(),
         tags,

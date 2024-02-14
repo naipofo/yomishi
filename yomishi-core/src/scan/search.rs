@@ -33,7 +33,10 @@ pub struct TermWithTags {
 }
 
 impl Backend {
-    pub fn search(&self, text: &str) -> Result<Vec<SearchResult>> {
+    pub async fn search(&self, text: &str) -> Result<Vec<SearchResult>> {
+        let disabled_dicts: Vec<i64> =
+            serde_json::from_value(self.storage.get_serde(DictionariesDisabled).await)?;
+
         self.deinflector
             .deinflect(text)
             .into_iter()
@@ -57,9 +60,6 @@ impl Backend {
                         .into_values()
                         .collect()
                 }
-
-                let disabled_dicts: Vec<i64> =
-                    serde_json::from_value(self.storage.get_serde(DictionariesDisabled))?;
 
                 let lookup_raw = self
                     .storage
@@ -87,7 +87,7 @@ impl Backend {
                     .map(|e| {
                         let mut all_tags = HashSet::new();
 
-                        let t = &e.get(0).ok_or(YomishiError::Database)?.0;
+                        let t = &e.first().ok_or(YomishiError::Database)?.0;
                         let term_meta = self
                             .storage
                             .get_term_meta(&t.expression, &t.reading)?

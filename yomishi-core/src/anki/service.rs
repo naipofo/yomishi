@@ -16,7 +16,7 @@ use super::connect::{
 };
 
 impl yomishi_proto::yomishi::anki::Anki for Backend {
-    fn save_definition(
+    async fn save_definition(
         &self,
         SaveDefinitionRequest {
             scanned,
@@ -24,38 +24,36 @@ impl yomishi_proto::yomishi::anki::Anki for Backend {
             state,
         }: SaveDefinitionRequest,
     ) -> SaveDefinitionReply {
-        self.runtime.block_on(self.add_to_anki(
-            &search_to_template_data(self.search(&scanned).unwrap().remove(index as usize)),
+        self.add_to_anki(
+            &search_to_template_data(self.search(&scanned).await.unwrap().remove(index as usize)),
             &state,
-        ));
+        )
+        .await;
         SaveDefinitionReply {}
     }
 
-    fn open_card(&self, OpenCardRequest { c_id }: OpenCardRequest) -> OpenCardReply {
-        self.runtime
-            .block_on(
-                AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress)).invoke(
-                    &GuiBrowse {
-                        query: &format!("cid:{c_id}"),
-                    },
-                ),
-            )
+    async fn open_card(&self, OpenCardRequest { c_id }: OpenCardRequest) -> OpenCardReply {
+        AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress).await)
+            .invoke(&GuiBrowse {
+                query: &format!("cid:{c_id}"),
+            })
+            .await
             .unwrap();
         OpenCardReply {}
     }
 }
 impl Backend {
     async fn add_to_anki(&self, data: &GlossaryTemplateData, state: &Option<ClientState>) {
-        let fields = self.render_anki_fields(data, state);
-        let tag = self.storage.get_string(AnkiTag);
+        let fields = self.render_anki_fields(data, state).await;
+        let tag = self.storage.get_string(AnkiTag).await;
         let note_model = Note {
-            deck_name: &self.storage.get_string(AnkiDeckName),
-            model_name: &self.storage.get_string(AnkiModelName),
+            deck_name: &self.storage.get_string(AnkiDeckName).await,
+            model_name: &self.storage.get_string(AnkiModelName).await,
             fields: &fields.iter().map(|(a, b)| (a.as_str(), b.trim())).collect(),
             tags: &vec![&tag],
         };
 
-        AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress))
+        AnkiConnectClient::new(&self.storage.get_string(AnkiConnectAddress).await)
             .invoke(&AddNote { note: &note_model })
             .await
             .unwrap();

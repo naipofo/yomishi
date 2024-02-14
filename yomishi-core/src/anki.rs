@@ -11,7 +11,7 @@ pub mod connect;
 mod service;
 
 impl Backend {
-    pub fn render_anki_fields(
+    pub async fn render_anki_fields(
         &self,
         data: &GlossaryTemplateData,
         state: &Option<ClientState>,
@@ -19,7 +19,8 @@ impl Backend {
         let hb = HandlebarsRenderer::new();
         let config: HashMap<String, String> = serde_json::from_value(
             self.storage
-                .get_serde(yomishi_config::SerdeKeys::AnkiFields),
+                .get_serde(yomishi_config::SerdeKeys::AnkiFields)
+                .await,
         )
         .unwrap();
         config

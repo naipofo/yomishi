@@ -8,6 +8,10 @@ mod terms_meta;
 
 use rusqlite::Connection;
 use std::path::Path;
+use surrealdb::{
+    engine::local::{Db, Mem},
+    Surreal,
+};
 
 use crate::dict::LoadedDict;
 
@@ -19,19 +23,27 @@ use self::{
 
 pub struct Database {
     pub conn: Connection,
+    pub s_conn: Surreal<Db>,
 }
 
 impl Database {
-    pub fn new() -> rusqlite::Result<Self> {
-        let conn = Connection::open(Path::new("./db.sqlite3"))?;
+    pub async fn new() -> rusqlite::Result<Self> {
+        // TODO: WASM - use indexed db instead
+        let s_conn = surrealdb::Surreal::new::<Mem>(()).await.unwrap();
+        s_conn.use_ns("yomishi").use_db("yomishi").await.unwrap();
+        s_conn
+            .query(include_str!("database/create.surql"))
+            .await
+            .unwrap();
 
+        let conn = Connection::open(Path::new("./db.sqlite3"))?;
         conn.execute_batch(concat!(
             "PRAGMA journal_mode = WAL;",
             include_str!("database/create.sql"),
             include_str!("database/index.sql")
         ))?;
 
-        Ok(Self { conn })
+        Ok(Self { conn, s_conn })
     }
 
     pub fn load(&mut self, dictionary: LoadedDict) -> rusqlite::Result<()> {

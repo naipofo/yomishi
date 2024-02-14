@@ -20,40 +20,56 @@ use crate::{
 };
 
 impl Config for Backend {
-    fn fetch_config(&self, data: FetchConfigRequest) -> FetchConfigReply {
+    async fn fetch_config(&self, data: FetchConfigRequest) -> FetchConfigReply {
         FetchConfigReply {
-            config: self.get_serialized(data),
+            config: self.get_serialized(data).await,
         }
     }
 
-    fn push_config(
+    async fn push_config(
         &self,
         PushConfigRequest { r#type, key, value }: PushConfigRequest,
     ) -> PushConfigReply {
         match ConfigType::try_from(r#type).unwrap() {
-            ConfigType::Boolean => self.storage.set_bool(
-                BooleanKeys::from_str(&key).unwrap(),
-                serde_json::from_str(&value).unwrap(),
-            ),
-            ConfigType::String => self.storage.set_string(
-                StringKeys::from_str(&key).unwrap(),
-                serde_json::from_str(&value).unwrap(),
-            ),
-            ConfigType::Integer => self.storage.set_integer(
-                IntegerKeys::from_str(&key).unwrap(),
-                serde_json::from_str(&value).unwrap(),
-            ),
-            ConfigType::Serde => self.storage.set_serde(
-                SerdeKeys::from_str(&key).unwrap(),
-                serde_json::from_str(&value).unwrap(),
-            ),
+            ConfigType::Boolean => {
+                self.storage
+                    .set_bool(
+                        BooleanKeys::from_str(&key).unwrap(),
+                        serde_json::from_str(&value).unwrap(),
+                    )
+                    .await
+            }
+            ConfigType::String => {
+                self.storage
+                    .set_string(
+                        StringKeys::from_str(&key).unwrap(),
+                        serde_json::from_str(&value).unwrap(),
+                    )
+                    .await
+            }
+            ConfigType::Integer => {
+                self.storage
+                    .set_integer(
+                        IntegerKeys::from_str(&key).unwrap(),
+                        serde_json::from_str(&value).unwrap(),
+                    )
+                    .await
+            }
+            ConfigType::Serde => {
+                self.storage
+                    .set_serde(
+                        SerdeKeys::from_str(&key).unwrap(),
+                        serde_json::from_str(&value).unwrap(),
+                    )
+                    .await
+            }
         }
         .unwrap();
 
         PushConfigReply {}
     }
 
-    fn dictionary_list(&self, _: DictionaryListRequest) -> DictionaryListReply {
+    async fn dictionary_list(&self, _: DictionaryListRequest) -> DictionaryListReply {
         DictionaryListReply {
             dictionaries: self
                 .storage
@@ -75,39 +91,49 @@ impl Config for Backend {
         }
     }
 
-    fn anki_config_data(&self, _: AnkiConfigDataRequest) -> AnkiConfigDataReply {
-        self.runtime.block_on(async {
-            let address = self.storage.get_string(AnkiConnectAddress);
-            let client = &AnkiConnectClient::new(&address);
-            AnkiConfigDataReply {
-                decks: client.invoke(&DeckNames {}).await.unwrap(),
-                models: client.invoke(&ModelNames {}).await.unwrap(),
-                current_model_fields: client
-                    .invoke(&ModelFieldNames {
-                        model_name: &self.storage.get_string(AnkiModelName),
-                    })
-                    .await
-                    .unwrap_or(vec![]),
-            }
-        })
+    async fn anki_config_data(&self, _: AnkiConfigDataRequest) -> AnkiConfigDataReply {
+        let address = self.storage.get_string(AnkiConnectAddress).await;
+        let client = &AnkiConnectClient::new(&address);
+        AnkiConfigDataReply {
+            decks: client.invoke(&DeckNames {}).await.unwrap(),
+            models: client.invoke(&ModelNames {}).await.unwrap(),
+            current_model_fields: client
+                .invoke(&ModelFieldNames {
+                    model_name: &self.storage.get_string(AnkiModelName).await,
+                })
+                .await
+                .unwrap_or(vec![]),
+        }
     }
 }
 
 impl Backend {
-    fn get_serialized(&self, FetchConfigRequest { r#type, key }: FetchConfigRequest) -> String {
+    async fn get_serialized(
+        &self,
+        FetchConfigRequest { r#type, key }: FetchConfigRequest,
+    ) -> String {
         serde_json::to_string(&match ConfigType::try_from(r#type).unwrap() {
-            ConfigType::Boolean => {
-                Value::Bool(self.storage.get_bool(BooleanKeys::from_str(&key).unwrap()))
-            }
+            ConfigType::Boolean => Value::Bool(
+                self.storage
+                    .get_bool(BooleanKeys::from_str(&key).unwrap())
+                    .await,
+            ),
             ConfigType::Integer => Value::Number(
                 self.storage
                     .get_integer(IntegerKeys::from_str(&key).unwrap())
+                    .await
                     .into(),
             ),
-            ConfigType::String => {
-                Value::String(self.storage.get_string(StringKeys::from_str(&key).unwrap()))
+            ConfigType::String => Value::String(
+                self.storage
+                    .get_string(StringKeys::from_str(&key).unwrap())
+                    .await,
+            ),
+            ConfigType::Serde => {
+                self.storage
+                    .get_serde(SerdeKeys::from_str(&key).unwrap())
+                    .await
             }
-            ConfigType::Serde => self.storage.get_serde(SerdeKeys::from_str(&key).unwrap()),
         })
         .unwrap()
     }
