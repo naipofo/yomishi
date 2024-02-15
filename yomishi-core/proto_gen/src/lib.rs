@@ -17,7 +17,12 @@ impl ServiceGenerator for ServiceGen {
         buf.push_str("use prost::Message;");
 
         // trait
-        writeln!(buf, "pub trait {name} {{").unwrap();
+        writeln!(
+            buf,
+            "#[allow(async_fn_in_trait)]
+            pub trait {name} {{"
+        )
+        .unwrap();
         for Method {
             name,
             input_type,

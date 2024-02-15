@@ -1,80 +1,118 @@
-use rusqlite::{params, Connection};
-
 use crate::dict::parser::term::Term;
 
 use super::Database;
 
-pub fn insert_terms_bulk(
-    conn: &Connection,
-    terms: Vec<Term>,
-    dictionary_id: i64,
-) -> rusqlite::Result<()> {
-    let mut prep = conn.prepare_cached(
-        "INSERT INTO terms(
-            expression,
-            reading,
-            definition_tags,
-            rules,
-            score,
-            glossary,
-            sequence,
-            term_tags,
-            dictionary
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    )?;
-
-    terms.iter().try_for_each(|t| {
-        prep.insert(params![
-            t.expression,
-            t.reading,
-            serde_json::to_string(&t.definition_tags).unwrap(),
-            t.rules,
-            t.score,
-            serde_json::to_string(&t.glossary).unwrap(),
-            t.sequence,
-            serde_json::to_string(&t.term_tags).unwrap(),
-            dictionary_id
-        ])
-        .map(|_| ())
-    })?;
-    prep.discard();
-    Ok(())
-}
+use serde::{Deserialize, Serialize};
+use surrealdb::{sql::Thing, Result};
 
 impl Database {
-    pub fn get_terms(&self, term: &str) -> rusqlite::Result<Vec<(Term, i64)>> {
-        let mut prep = self.conn.prepare(
-            "SELECT
-                expression,
-                reading,
-                definition_tags,
-                rules,
-                score,
-                glossary,
-                sequence,
-                term_tags,
-                dictionary
-                FROM terms 
-            WHERE expression = ?",
-        )?;
-        let results = prep
-            .query_map(params![term], |e| {
-                Ok((
-                    Term {
-                        expression: e.get(0)?,
-                        reading: e.get(1)?,
-                        definition_tags: serde_json::from_str(&e.get::<_, String>(2)?).unwrap(),
-                        rules: e.get(3)?,
-                        score: e.get(4)?,
-                        glossary: serde_json::from_str(&e.get::<_, String>(5)?).unwrap(),
-                        sequence: e.get(6)?,
-                        term_tags: serde_json::from_str(&e.get::<_, String>(7)?).unwrap(),
-                    },
-                    e.get(8)?,
-                ))
-            })?
-            .collect::<rusqlite::Result<Vec<_>>>()?;
+    pub async fn insert_terms_bulk(&self, terms: Vec<Term>, dictionary_id: &str) -> Result<()> {
+        #[derive(Debug, Serialize)]
+        struct InsertTerm<'a> {
+            definition_tags: String,
+            dictionary: Thing,
+            expression: &'a str,
+            glossary: String,
+            reading: &'a str,
+            rules: &'a str,
+            score: &'a i64,
+            sequence: &'a i64,
+            tags: Vec<Thing>,
+        }
+        self.conn
+            .query("INSERT INTO term $terms")
+            .bind((
+                "terms",
+                terms
+                    .iter()
+                    .map(
+                        |Term {
+                             expression,
+                             reading,
+                             definition_tags,
+                             rules,
+                             score,
+                             glossary,
+                             sequence,
+                             term_tags,
+                         }| InsertTerm {
+                            dictionary: Thing {
+                                tb: "dictionary".to_owned(),
+                                id: dictionary_id.into(),
+                            },
+                            expression,
+                            reading,
+                            definition_tags: serde_json::to_string(&definition_tags).unwrap(),
+                            rules,
+                            score,
+                            sequence,
+                            glossary: serde_json::to_string(&glossary).unwrap(),
+                            tags: term_tags
+                                .iter()
+                                .map(|t| Thing {
+                                    tb: "tag".to_string(),
+                                    id: surrealdb::sql::Id::String(t.to_string()),
+                                })
+                                .collect(),
+                        },
+                    )
+                    .collect::<Vec<_>>(),
+            ))
+            .await?;
 
-        Ok(results)
+        Ok(())
+    }
+    pub async fn get_terms(&self, term: &str) -> Result<Vec<(Term, String)>> {
+        #[derive(Debug, Deserialize)]
+        struct TermData {
+            definition_tags: String,
+            dictionary: Thing,
+            expression: String,
+            glossary: String,
+            reading: String,
+            rules: String,
+            score: i64,
+            sequence: i64,
+            // TODO: Query tags together with terms
+            tags: Vec<Thing>,
+        }
+
+        let data: Vec<TermData> = self
+            .conn
+            .query("SELECT * FROM term WHERE expression = $expression")
+            .bind(("expression", term))
+            .await?
+            .take(0)?;
+
+        Ok(data
+            .into_iter()
+            .map(
+                |TermData {
+                     definition_tags,
+                     dictionary,
+                     expression,
+                     glossary,
+                     reading,
+                     rules,
+                     score,
+                     sequence,
+                     tags,
+                 }| {
+                    (
+                        Term {
+                            expression,
+                            reading,
+                            definition_tags: serde_json::from_str(&definition_tags).unwrap(),
+                            rules,
+                            score,
+                            glossary: serde_json::from_str(&glossary).unwrap(),
+                            sequence,
+                            term_tags: tags.into_iter().map(|t| t.id.to_string()).collect(),
+                        },
+                        dictionary.id.to_string(),
+                    )
+                },
+            )
+            .collect())
     }
 }

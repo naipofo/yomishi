@@ -1,64 +1,97 @@
-use rusqlite::{params, Connection};
+use serde::{Deserialize, Serialize};
+use surrealdb::{
+    sql::{Id, Thing},
+    Result,
+};
 
 use crate::dict::parser::tag::Tag;
 
 use super::Database;
 
-pub fn insert_tags_bulk(
-    conn: &Connection,
-    terms: Vec<Tag>,
-    dictionary_id: i64,
-) -> rusqlite::Result<()> {
-    let mut prep = conn.prepare_cached(
-        "INSERT INTO tags(
-            name,
-            category,
-            sorting,
-            notes,
-            popularity,
-            dictionary
-        ) VALUES (?, ?, ?, ?, ?, ?)",
-    )?;
-
-    terms.iter().try_for_each(|t| {
-        prep.insert(params![
-            t.name,
-            t.category,
-            t.sorting,
-            t.notes,
-            t.popularity,
-            dictionary_id
-        ])
-        .map(|_| ())
-    })?;
-    prep.discard();
-    Ok(())
-}
-
 impl Database {
-    fn get_tag(&self, name: &str, dict_id: &i64) -> rusqlite::Result<Tag> {
+    pub async fn insert_tags_bulk(&self, tags: Vec<Tag>, dictionary_id: &str) -> Result<()> {
+        #[derive(Debug, Serialize)]
+        struct InsertTag<'a> {
+            id: &'a str,
+            category: &'a str,
+            dictionary: Thing,
+            notes: &'a str,
+            popularity: &'a i64,
+            sorting: &'a i64,
+        }
         self.conn
-            .prepare(
-                "SELECT
-                    name,
+            .query("INSERT INTO tag $tags")
+            .bind((
+                "tags",
+                tags.iter()
+                    .map(
+                        |Tag {
+                             name,
+                             category,
+                             sorting,
+                             notes,
+                             popularity,
+                         }| InsertTag {
+                            id: name,
+                            category,
+                            notes,
+                            sorting,
+                            popularity,
+                            dictionary: Thing {
+                                tb: "dictionary".to_owned(),
+                                id: Id::String(dictionary_id.to_owned()),
+                            },
+                        },
+                    )
+                    .collect::<Vec<_>>(),
+            ))
+            .await?;
+
+        Ok(())
+    }
+    pub async fn get_tag_list(&self, names: &[String], _dict_id: &str) -> Result<Vec<Tag>> {
+        #[derive(Debug, Deserialize)]
+        struct TagData {
+            id: String,
+            category: String,
+            notes: String,
+            popularity: i64,
+            sorting: i64,
+        }
+
+        let data: Vec<TagData> = self
+            .conn
+            .query("SELECT * FROM tag WHERE name IN $name")
+            .bind((
+                "name",
+                names
+                    .iter()
+                    .map(|n| Thing {
+                        tb: "tag".to_owned(),
+                        id: n.into(),
+                    })
+                    .collect::<Vec<_>>(),
+            ))
+            .await?
+            .take(0)?;
+
+        Ok(data
+            .into_iter()
+            .map(
+                |TagData {
+                     id,
+                     category,
+                     notes,
+                     popularity,
+                     sorting,
+                 }| Tag {
+                    name: id,
                     category,
                     sorting,
                     notes,
-                    popularity
-                FROM tags 
-                WHERE name = ? AND dictionary = ?",
-            )?
-            .query_row(params![name, dict_id], |tag_row| {
-                Ok(Tag {
-                    name: tag_row.get(0)?,
-                    category: tag_row.get(1)?,
-                    sorting: tag_row.get(2)?,
-                    notes: tag_row.get(3)?,
-                    popularity: tag_row.get(4)?,
-                })
-            })
-    }
-    pub fn get_tag_list(&self, names: &[String], dict_id: &i64) -> rusqlite::Result<Vec<Tag>> {
-        names.iter().map(|e| self.get_tag(e, dict_id)).collect()
+                    popularity,
+                },
+            )
+            .collect())
     }
 }

@@ -34,19 +34,13 @@ pub type LoadedDict = (
     Vec<Tag>,
 );
 
-pub fn import_from_directory<F: FnMut(&DictIndex) -> bool>(
-    dir_path: &Path,
-    mut should_import: F,
-) -> std::io::Result<Vec<LoadedDict>> {
+pub fn import_from_directory(dir_path: &Path) -> std::io::Result<Vec<LoadedDict>> {
     read_dir(dir_path)?
-        .filter_map(|e| {
+        .map(|e| {
             let mut zip = zip::ZipArchive::new(File::open(e.unwrap().path()).unwrap()).unwrap();
             let index = get_index(&mut zip).unwrap();
-            if should_import(&index) {
-                Some(import_zip(&mut zip, index))
-            } else {
-                None
-            }
+
+            import_zip(&mut zip, index)
         })
         .collect()
 }

@@ -33,7 +33,7 @@ message PushConfigRequest {
 message PushConfigReply { }
 
 message Dictionary {
-  int64 id = 1;
+  string id = 1;
   string name = 2; // TODO: full metadata
 }
 

@@ -12,11 +12,10 @@ pub struct Backend {
 impl Backend {
     pub async fn new() -> Result<Self> {
         let mut storage = Database::new().await?;
-        let dicts = import_from_directory(Path::new("local_test_files/dic"), |index| {
-            !storage.dict_exists(index).unwrap()
-        })?;
+        // TODO: do not load already existing ones!
+        let dicts = import_from_directory(Path::new("local_test_files/dic"))?;
         for d in dicts {
-            storage.load(d).unwrap();
+            storage.load(d).await.unwrap();
         }
         Ok(Self {
             storage,

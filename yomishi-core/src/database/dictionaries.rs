@@ -1,63 +1,99 @@
-use rusqlite::{params, Connection};
+use serde::{Deserialize, Serialize};
+use surrealdb::sql::Thing;
 
 use crate::dict::DictIndex;
 
 use super::Database;
 
-pub fn insert_dictionary(conn: &Connection, index: &DictIndex) -> rusqlite::Result<i64> {
-    conn.execute(
-        "INSERT INTO dictionaries(
-            title,
-            revision
-        ) VALUES (?, ?)",
-        index_to_touple(index),
-    )?;
-    Ok(conn.last_insert_rowid())
-}
-
-fn index_to_touple(i: &DictIndex) -> (&str, &str) {
-    (&i.title, &i.revision)
+#[derive(Debug, Deserialize)]
+struct DictId {
+    id: Thing,
 }
 
 impl Database {
-    pub fn dict_exists(&self, index: &DictIndex) -> rusqlite::Result<bool> {
+    pub async fn insert_dictionary(
+        &self,
+        DictIndex {
+            title, revision, ..
+        }: &DictIndex,
+    ) -> surrealdb::Result<String> {
+        #[derive(Debug, Serialize)]
+        struct InsertDict<'a> {
+            title: &'a str,
+            revision: &'a str,
+        }
+        let mut created: Vec<DictId> = self
+            .conn
+            .create("dictionary")
+            .content(InsertDict { title, revision })
+            .await?;
+        Ok(created.remove(0).id.id.to_string())
+    }
+
+    pub async fn dict_exists(
+        &self,
+        DictIndex {
+            title, revision, ..
+        }: &DictIndex,
+    ) -> surrealdb::Result<bool> {
+        Ok(!self
+            .conn
+            .query("SELECT * FROM dictionary WHERE title = $title AND revision = $revision")
+            .bind(("title", title))
+            .bind(("revision", revision))
+            .await?
+            .take::<Vec<DictId>>(0)?
+            .is_empty())
+    }
+
+    pub async fn get_dict_by_id(&self, id: &str) -> surrealdb::Result<String> {
+        #[derive(Debug, Deserialize)]
+        struct DictName {
+            title: String,
+        }
+
         Ok(self
             .conn
-            .prepare("SELECT EXISTS(SELECT 1 FROM dictionaries WHERE title = ? AND revision = ?)")?
-            .query_row(index_to_touple(index), |r| r.get::<_, i64>(0))?
-            == 1)
+            .query("SELECT title FROM $d")
+            .bind((
+                "d",
+                Thing {
+                    tb: "dictionary".to_owned(),
+                    id: id.into(),
+                },
+            ))
+            .await?
+            .take::<Vec<DictName>>(0)?
+            .remove(0)
+            .title)
     }
 
-    pub fn get_dict_by_id(&self, id: &i64) -> rusqlite::Result<String> {
-        self.conn
-            .prepare(
-                "SELECT
-                title
-            FROM dictionaries
-            WHERE id = ?",
-            )?
-            .query_row(params![id], |e| e.get(0))
-    }
-
-    pub fn get_dicts(&self) -> rusqlite::Result<Vec<(i64, DictIndex)>> {
-        self.conn
-            .prepare(
-                "SELECT
-                id,
-                title,
-                revision
-            FROM dictionaries",
-            )?
-            .query_map(params![], |e| {
-                Ok((
-                    e.get(0)?,
-                    DictIndex {
-                        title: e.get(1)?,
-                        revision: e.get(2)?,
-                        format: 3,
-                    },
-                ))
-            })?
-            .collect()
+    pub async fn get_dicts(&self) -> surrealdb::Result<Vec<(String, DictIndex)>> {
+        #[derive(Debug, Deserialize)]
+        struct DictData {
+            id: String,
+            revision: String,
+            title: String,
+        }
+        let data: Vec<DictData> = self.conn.select("dictionary").await?;
+        Ok(data
+            .into_iter()
+            .map(
+                |DictData {
+                     id,
+                     revision,
+                     title,
+                 }| {
+                    (
+                        id,
+                        DictIndex {
+                            title,
+                            revision,
+                            format: 3,
+                        },
+                    )
+                },
+            )
+            .collect())
     }
 }

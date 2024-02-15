@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use yomishi_config::{BooleanKeys, IntegerKeys, SerdeKeys, StringKeys};
 
-use crate::error::Result;
+use crate::error::{yo_er, Result};
 
 use super::Database;
 
@@ -20,17 +20,17 @@ impl Database {
     // TODO: different result for db error / no value
     pub async fn get_generic(&self, key: &str) -> Result<Value> {
         let a: Option<SurConfig> = self
-            .s_conn
+            .conn
             .select(("config", key))
             .await
-            .map_err(|_| crate::error::YomishiError::Database)?;
-        let value = a.ok_or(crate::error::YomishiError::Database)?;
+            .map_err(|_| yo_er!())?;
+        let value = a.ok_or(yo_er!())?;
         Ok(serde_json::from_str(&value.value).unwrap())
     }
 
     pub async fn set_generic(&self, key: &str, value: &str) -> Result<()> {
         let _: Option<SurConfig> = self
-            .s_conn
+            .conn
             .update(("config", key))
             .content(SurUpdateConfig { value })
             .await

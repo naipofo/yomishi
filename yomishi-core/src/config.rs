@@ -74,6 +74,7 @@ impl Config for Backend {
             dictionaries: self
                 .storage
                 .get_dicts()
+                .await
                 .unwrap()
                 .into_iter()
                 .map(
