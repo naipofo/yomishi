@@ -7,6 +7,7 @@ members = [
   "yomishi-core/proto",
   "yomishi-core/local_server",
 ]
+resolver = "2"
 
 [workspace.dependencies]
 yomishi_config_gen = { path = "yomishi-core/config_gen" }

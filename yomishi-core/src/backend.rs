@@ -17,6 +17,7 @@ impl Backend {
         for d in dicts {
             storage.load(d).await.unwrap();
         }
+        dbg!("loaded");
         Ok(Self {
             storage,
             deinflector: construct_deinflector()?,

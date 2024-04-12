@@ -1,15 +1,53 @@
-use crate::dict::parser::term::Term;
+use crate::dict::parser::{tag::Tag, term::Term};
 
 use super::Database;
 
 use serde::{Deserialize, Serialize};
 use surrealdb::{sql::Thing, Result};
 
+#[derive(Debug, Deserialize)]
+pub struct LookupData {
+    pub dictionary: Thing,
+    pub dictionary_name: String,
+    pub expression: String,
+    pub reading: String,
+    pub glossary: String,
+    pub rules: String,
+    pub tags: Vec<LookupDataTag>,
+    pub definition_tags: Vec<LookupDataTag>,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Hash)]
+pub struct LookupDataTag {
+    pub id: Thing,
+    pub dictionary: Thing,
+    pub category: String,
+    pub notes: String,
+}
+
+impl LookupDataTag {
+    pub fn into_model(self) -> Tag {
+        let LookupDataTag {
+            id,
+            category,
+            notes,
+            ..
+        } = self;
+        Tag {
+            name: id.id.to_string(),
+            category,
+            notes,
+            sorting: 0,
+            popularity: 0,
+        }
+    }
+}
+
 impl Database {
     pub async fn insert_terms_bulk(&self, terms: Vec<Term>, dictionary_id: &str) -> Result<()> {
         #[derive(Debug, Serialize)]
         struct InsertTerm<'a> {
-            definition_tags: String,
+            definition_tags: Vec<Thing>,
             dictionary: Thing,
             expression: &'a str,
             glossary: String,
@@ -42,18 +80,12 @@ impl Database {
                             },
                             expression,
                             reading,
-                            definition_tags: serde_json::to_string(&definition_tags).unwrap(),
+                            definition_tags: tags_to_things(definition_tags),
                             rules,
                             score,
                             sequence,
                             glossary: serde_json::to_string(&glossary).unwrap(),
-                            tags: term_tags
-                                .iter()
-                                .map(|t| Thing {
-                                    tb: "tag".to_string(),
-                                    id: surrealdb::sql::Id::String(t.to_string()),
-                                })
-                                .collect(),
+                            tags: tags_to_things(term_tags),
                         },
                     )
                     .collect::<Vec<_>>(),
@@ -62,10 +94,15 @@ impl Database {
 
         Ok(())
     }
+
+    pub async fn new_term_lookup(&self, terms: Vec<&str>) -> Result<Vec<LookupData>> {
+        let q = include_str!("terms/lookup.surql");
+        self.conn.query(q).bind(("terms", &terms)).await?.take(0)
+    }
+
     pub async fn get_terms(&self, term: &str) -> Result<Vec<(Term, String)>> {
         #[derive(Debug, Deserialize)]
         struct TermData {
-            definition_tags: String,
             dictionary: Thing,
             expression: String,
             glossary: String,
@@ -74,6 +111,7 @@ impl Database {
             score: i64,
             sequence: i64,
             // TODO: Query tags together with terms
+            definition_tags: Vec<Thing>,
             tags: Vec<Thing>,
         }
 
@@ -102,7 +140,10 @@ impl Database {
                         Term {
                             expression,
                             reading,
-                            definition_tags: serde_json::from_str(&definition_tags).unwrap(),
+                            definition_tags: definition_tags
+                                .into_iter()
+                                .map(|t| t.id.to_string())
+                                .collect(),
                             rules,
                             score,
                             glossary: serde_json::from_str(&glossary).unwrap(),
@@ -115,4 +156,14 @@ impl Database {
             )
             .collect())
     }
+}
+
+fn tags_to_things(term_tags: &[String]) -> Vec<Thing> {
+    term_tags
+        .iter()
+        .map(|t| Thing {
+            tb: "tag".to_string(),
+            id: surrealdb::sql::Id::String(t.to_string()),
+        })
+        .collect()
 }

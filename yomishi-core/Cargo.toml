@@ -12,14 +12,14 @@ yomishi_proto.workspace = true
 
 # remote
 futures = "0.3.28"
-handlebars = "4.4.0"
+handlebars = "5.1.2"
 prost = "0.12.1"
-quick-xml = "0.30.0"
+quick-xml = "0.31.0"
 regex = "1.9"
-reqwest = { version = "0.11.20", features = ["json"] }
+reqwest = { version = "0.12.3", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_with = "3.3.0"
-strum = { version = "0.25.0", features = ["derive"] }
-surrealdb-beta = { version = "1.2.1", default-features = false, features = ["kv-speedb"] } # TODO: WASM - use kv-indxdb
+strum = { version = "0.26.2", features = ["derive"] }
+surrealdb-beta = { version = "1.4.0", default-features = false, features = ["kv-speedb"] } # TODO: WASM - use kv-indxdb
 zip = "0.6.6"

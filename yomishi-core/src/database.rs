@@ -3,7 +3,7 @@ mod dictionaries;
 mod kanjis;
 mod kanjis_meta;
 mod tags;
-mod terms;
+pub mod terms;
 mod terms_meta;
 
 use surrealdb::{
@@ -24,6 +24,8 @@ impl Database {
             .await
             .unwrap();
         conn.use_ns("yomishi").use_db("yomishi").await.unwrap();
+
+        // TODO: do not re-create it every time, slows down startup a lot
         conn.query(include_str!("database/create.surql"))
             .await
             .unwrap();

@@ -1,4 +1,7 @@
-use std::collections::{BTreeMap, HashSet};
+use std::{
+    collections::{BTreeMap, HashSet},
+    vec,
+};
 
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
@@ -6,9 +9,10 @@ use yomishi_config::SerdeKeys::DictionariesDisabled;
 
 use crate::{
     backend::Backend,
-    deinflector::{DeinflectionMeta, DeinflectionResult},
+    database::terms::LookupData,
+    deinflector::DeinflectionMeta,
     dict::parser::{tag::Tag, term::Term, term_meta::TermMeta},
-    error::{yo_er, Result},
+    error::{yo_er, Result, YomishiError},
 };
 
 #[derive(Deserialize, Serialize)]
@@ -32,113 +36,117 @@ pub struct TermWithTags {
     pub term: Term,
     pub tags: Vec<Tag>,
 }
+
+fn group_pairs_new(v: Vec<LookupData>) -> Vec<Vec<LookupData>> {
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    struct DedupKey(String, String);
+    // TODO: Should probably be ref instead of value
+
+    v.into_iter()
+        .fold(BTreeMap::<_, Vec<LookupData>>::new(), |mut acc, el| {
+            acc.entry(DedupKey(el.expression.to_string(), el.reading.to_string()))
+                .or_default()
+                .push(el);
+            acc
+        })
+        .into_values()
+        .collect()
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct SearchResultNew {
+    pub deinflection: DeinflectionMeta,
+    pub glossaries: Vec<DictionaryTagged<TermWithTags>>,
+    pub tags: Vec<Tag>,
+    pub meta: Vec<DictionaryTagged<TermMeta>>,
+}
+
 impl Backend {
     pub async fn search(&self, text: &str) -> Result<Vec<SearchResult>> {
         let disabled_dicts: Vec<String> =
             serde_json::from_value(self.storage.get_serde(DictionariesDisabled).await)?;
+        // TODO: nothing gets filtered for now
 
-        join_all(
-            self.deinflector
-                .deinflect(text)
+        // TODO: there has to be a smarter way to do this
+        let disabled_dicts: &[String] = &disabled_dicts;
+
+        let deinflections = self.deinflector.deinflect(text);
+
+        let terms = self
+            .storage
+            .new_term_lookup(deinflections.iter().map(|t| t.0.as_str()).collect())
+            .await?;
+
+        // TODO: consider grouping directly in surql (?)
+        let terms_grouped = group_pairs_new(terms);
+
+        let get_deinf_meta = |LookupData { expression, .. }: &LookupData| {
+            deinflections
                 .iter()
-                .map(|d| self.search_single(d, &disabled_dicts)),
-        )
-        .await
-        .into_iter()
-        .collect::<Result<Vec<Vec<_>>>>()
-        .map(|e| e.into_iter().flatten().collect())
-    }
-
-    async fn search_single(
-        &self,
-        DeinflectionResult(term, meta): &DeinflectionResult,
-        disabled_dicts: &[String],
-    ) -> Result<Vec<SearchResult>> {
-        let lookup_raw = join_all(
-            self.storage
-                .get_terms(term)
-                .await?
-                .into_iter()
-                .filter(|(_, x)| !disabled_dicts.contains(x))
-                .map(|r| async {
-                    let (term, dict_id) = r;
-                    let tags = self
-                        .storage
-                        .get_tag_list(&term.definition_tags, &dict_id)
-                        .await?;
-                    let term_tags = self.storage.get_tag_list(&term.term_tags, &dict_id).await?;
-
-                    Ok(LookupResult(
-                        term,
-                        tags,
-                        term_tags,
-                        self.storage.get_dict_by_id(&dict_id).await?,
-                        dict_id,
-                    ))
-                }),
-        )
-        .await
-        .into_iter()
-        .collect::<Result<Vec<_>>>()?;
-
-        let terms_grouped = LookupResult::group_pairs(lookup_raw);
+                .find(|d| d.0 == *expression)
+                .unwrap()
+                .1
+                .clone()
+        };
 
         join_all(terms_grouped.into_iter().map(|e| async move {
             let mut all_tags = HashSet::new();
 
-            let t = &e.first().ok_or(yo_er!())?.0;
-            let term_meta: Vec<_> = self
+            let shared_term = &e.first().ok_or(yo_er!())?;
+            let meta = self
                 .storage
-                .get_term_meta(&t.expression, &t.reading)
+                .get_term_meta("term", "reading")
                 .await?
                 .into_iter()
                 .filter(|DictionaryTagged { dictionary_id, .. }| {
                     !disabled_dicts.contains(dictionary_id)
                 })
                 .collect();
-            Ok(SearchResult {
-                deinflection: meta.clone(),
+
+            Ok::<SearchResult, YomishiError>(SearchResult {
+                deinflection: get_deinf_meta(shared_term),
                 glossaries: e
                     .into_iter()
                     .map(
-                        |LookupResult(term, tags, global, dictionary, dictionary_id)| {
-                            all_tags.extend(global);
+                        |LookupData {
+                             dictionary,
+                             dictionary_name,
+                             expression,
+                             reading,
+                             glossary,
+                             rules,
+                             tags,
+                             definition_tags,
+                         }| {
+                            all_tags.extend(definition_tags);
+                            // TODO: instead of putting mock data, rework how
+                            // data is moved around when scaning
                             DictionaryTagged {
-                                data: TermWithTags { term, tags },
-                                dictionary,
-                                dictionary_id,
+                                data: TermWithTags {
+                                    term: Term {
+                                        expression,
+                                        reading,
+                                        definition_tags: vec![],
+                                        rules,
+                                        score: 0,
+                                        glossary: serde_json::from_str(&glossary).unwrap(),
+                                        sequence: 0,
+                                        term_tags: vec![],
+                                    },
+                                    tags: tags.into_iter().map(|t| t.into_model()).collect(),
+                                },
+                                dictionary: dictionary_name,
+                                dictionary_id: dictionary.id.to_string(),
                             }
                         },
                     )
                     .collect(),
-                tags: all_tags.into_iter().collect(),
-                meta: term_meta,
+                tags: all_tags.into_iter().map(|e| e.into_model()).collect(),
+                meta,
             })
         }))
         .await
         .into_iter()
         .collect()
-    }
-}
-
-struct LookupResult(Term, Vec<Tag>, Vec<Tag>, String, String);
-
-impl LookupResult {
-    fn group_pairs(v: Vec<LookupResult>) -> Vec<Vec<LookupResult>> {
-        #[derive(PartialEq, Eq, PartialOrd, Ord)]
-        struct DedupKey(String, String);
-
-        v.into_iter()
-            .fold(BTreeMap::<_, Vec<LookupResult>>::new(), |mut acc, el| {
-                acc.entry(DedupKey(
-                    el.0.expression.to_string(),
-                    el.0.reading.to_string(),
-                ))
-                .or_default()
-                .push(el);
-                acc
-            })
-            .into_values()
-            .collect()
     }
 }

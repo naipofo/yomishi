@@ -10,7 +10,6 @@ use crate::error::Result;
 
 pub struct AnkiConnectClient<'a> {
     address: &'a str,
-    client: Client,
 }
 
 pub trait ConnectAction: Serialize {
@@ -20,10 +19,7 @@ pub trait ConnectAction: Serialize {
 
 impl AnkiConnectClient<'_> {
     pub fn new(address: &str) -> AnkiConnectClient {
-        AnkiConnectClient {
-            address,
-            client: Client::new(),
-        }
+        AnkiConnectClient { address }
     }
 
     pub async fn invoke<T: ConnectAction>(&self, params: &T) -> Result<T::Output> {
@@ -33,8 +29,7 @@ impl AnkiConnectClient<'_> {
     }
 
     async fn invoke_any<T: Serialize>(&self, data: &T, action: &str) -> reqwest::Result<Value> {
-        let mut result = self
-            .client
+        let mut result = Client::new()
             .post(self.address)
             .json(&serde_json::json!({
                 "version": 6,

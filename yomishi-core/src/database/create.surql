@@ -34,14 +34,15 @@ DEFINE FIELD sorting ON tag TYPE int;
 
 DEFINE TABLE term SCHEMAFULL;
 
-DEFINE FIELD definition_tags ON term TYPE string;
 DEFINE FIELD dictionary ON term TYPE record<dictionary>;
 DEFINE FIELD expression ON term TYPE string;
-DEFINE FIELD glossary ON term TYPE string;
 DEFINE FIELD reading ON term TYPE string;
+DEFINE FIELD glossary ON term TYPE string;
 DEFINE FIELD rules ON term TYPE string;
 DEFINE FIELD score ON term TYPE int;
 DEFINE FIELD sequence ON term TYPE int;
+DEFINE FIELD definition_tags ON term TYPE array;
+DEFINE FIELD definition_tags[*] ON term TYPE record<tag>;
 DEFINE FIELD tags ON term TYPE array;
 DEFINE FIELD tags[*] ON term TYPE record<tag>;
 

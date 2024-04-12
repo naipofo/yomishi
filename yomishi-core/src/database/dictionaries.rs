@@ -71,7 +71,7 @@ impl Database {
     pub async fn get_dicts(&self) -> surrealdb::Result<Vec<(String, DictIndex)>> {
         #[derive(Debug, Deserialize)]
         struct DictData {
-            id: String,
+            id: Thing,
             revision: String,
             title: String,
         }
@@ -85,7 +85,7 @@ impl Database {
                      title,
                  }| {
                     (
-                        id,
+                        id.id.to_string(),
                         DictIndex {
                             title,
                             revision,
