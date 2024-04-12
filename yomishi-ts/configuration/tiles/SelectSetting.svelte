@@ -9,9 +9,11 @@
     }
 </script>
 
-<select disabled={$value.busy} on:input={input} value={$value.value}>
+<select disabled={$value.busy} on:input={input}>
     {#each choices as choice}
-        <option value={choice}>{choice}</option>
+        <option value={choice} selected={choice == $value.value}>
+            {choice}
+        </option>
     {/each}
 </select>
 
