@@ -65,16 +65,15 @@ impl Backend {
     pub async fn search(&self, text: &str) -> Result<Vec<SearchResult>> {
         let disabled_dicts: Vec<String> =
             serde_json::from_value(self.storage.get_serde(DictionariesDisabled).await)?;
-        // TODO: nothing gets filtered for now
-
-        // TODO: there has to be a smarter way to do this
-        let disabled_dicts: &[String] = &disabled_dicts;
 
         let deinflections = self.deinflector.deinflect(text);
 
         let terms = self
             .storage
-            .new_term_lookup(deinflections.iter().map(|t| t.0.as_str()).collect())
+            .new_term_lookup(
+                deinflections.iter().map(|t| t.0.as_str()).collect(),
+                &disabled_dicts,
+            )
             .await?;
 
         // TODO: consider grouping directly in surql (?)
@@ -93,15 +92,7 @@ impl Backend {
             let mut all_tags = HashSet::new();
 
             let shared_term = &e.first().ok_or(yo_er!())?;
-            let meta = self
-                .storage
-                .get_term_meta("term", "reading")
-                .await?
-                .into_iter()
-                .filter(|DictionaryTagged { dictionary_id, .. }| {
-                    !disabled_dicts.contains(dictionary_id)
-                })
-                .collect();
+            let meta = self.storage.get_term_meta("term", "reading").await?;
 
             Ok::<SearchResult, YomishiError>(SearchResult {
                 deinflection: get_deinf_meta(shared_term),

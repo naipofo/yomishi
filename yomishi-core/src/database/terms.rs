@@ -95,9 +95,25 @@ impl Database {
         Ok(())
     }
 
-    pub async fn new_term_lookup(&self, terms: Vec<&str>) -> Result<Vec<LookupData>> {
-        let q = include_str!("terms/lookup.surql");
-        self.conn.query(q).bind(("terms", &terms)).await?.take(0)
+    pub async fn new_term_lookup(
+        &self,
+        terms: Vec<&str>,
+        disabled_dicts: &[String],
+    ) -> Result<Vec<LookupData>> {
+        let disabled_dicts = disabled_dicts
+            .iter()
+            .map(|e| Thing {
+                tb: "dictionary".to_string(),
+                id: e.into(),
+            })
+            .collect::<Vec<_>>();
+
+        self.conn
+            .query(include_str!("terms/lookup.surql"))
+            .bind(("terms", &terms))
+            .bind(("disabled_dicts", disabled_dicts))
+            .await?
+            .take(0)
     }
 
     pub async fn get_terms(&self, term: &str) -> Result<Vec<(Term, String)>> {
