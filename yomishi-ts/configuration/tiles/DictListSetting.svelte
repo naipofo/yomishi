@@ -2,14 +2,14 @@
     import { ApiStore } from "../config-store";
     import SettingElement from "./SettingElement.svelte";
 
-    export let value: ApiStore<number[]>;
-    export let labelList: [number, string][];
+    export let value: ApiStore<string[]>;
+    export let labelList: [string, string][];
 
     // store access for components
     $: disabled = $value.busy;
     $: includes = labelList.map(([id]) => $value.value.includes(id));
 
-    const input = (id: number) => (e: { currentTarget: HTMLInputElement }) =>
+    const input = (id: string) => (e: { currentTarget: HTMLInputElement }) =>
         value.set(
             !e.currentTarget.checked
                 ? [...$value.value, id]
@@ -18,7 +18,7 @@
 </script>
 
 {#each labelList as [id, label], i}
-    <SettingElement title={`${id}. ${label}`}>
+    <SettingElement title={`${i + 1}. ${label}`}>
         <input type="checkbox" {disabled} on:input={input(id)} checked={!includes[i]} />
     </SettingElement>
 {/each}

@@ -23,11 +23,7 @@
     const configClient = createGenericRpcClient(transport, Config);
     const dictList = configClient
         .dictionaryList(DictionaryListRequest.fromJson({}))
-        .then((r) =>
-            r.dictionaries
-                .map((e) => [Number(e.id), e.name] as [number, string])
-                .sort((a, b) => a[0] - b[0]),
-        );
+        .then((r) => r.dictionaries.map((e) => [e.id, e.name] as [string, string]));
 
     const configData = createConfigHelperStore(transport);
 

@@ -1,8 +1,8 @@
 [Dictionaries.Disabled]
 type = "Serde"
 default = "[]"
-ts_type = "number[]"
-rs_type = "Vec<i64>"
+ts_type = "string[]"
+rs_type = "Vec<String>"
 
 [Popup.Width]
 type = "Integer"
