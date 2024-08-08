@@ -7,7 +7,7 @@ pub mod terms;
 mod terms_meta;
 
 use surrealdb::{
-    engine::local::{Db, SpeeDb},
+    engine::local::{Db, RocksDb},
     Result, Surreal,
 };
 
@@ -20,7 +20,7 @@ pub struct Database {
 impl Database {
     pub async fn new() -> Result<Self> {
         // TODO: WASM - use indexed db instead
-        let conn = surrealdb::Surreal::new::<SpeeDb>("s_database.db")
+        let conn = surrealdb::Surreal::new::<RocksDb>("s_database.db")
             .await
             .unwrap();
         conn.use_ns("yomishi").use_db("yomishi").await.unwrap();

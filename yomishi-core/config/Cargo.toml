@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 serde_json = "1.0"
-strum = { version = "0.25.0", features = ["derive"] }
+strum = { version = "0.26.3", features = ["derive"] }
 
 [build-dependencies]
 yomishi_config_gen.workspace = true

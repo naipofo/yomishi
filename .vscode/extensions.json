@@ -1,9 +1,9 @@
 {
     "recommendations": [
         "rust-lang.rust-analyzer",
-        "serayuzgur.crates",
         "surrealdb.surrealql",
         "svelte.svelte-vscode",
-        "ms-vscode.vscode-typescript-next"
+        "ms-vscode.vscode-typescript-next",
+        "dprint.dprint"
     ]
 }

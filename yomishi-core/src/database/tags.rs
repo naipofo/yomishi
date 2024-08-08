@@ -37,10 +37,7 @@ impl Database {
                             notes,
                             sorting,
                             popularity,
-                            dictionary: Thing {
-                                tb: "dictionary".to_owned(),
-                                id: Id::String(dictionary_id.to_owned()),
-                            },
+                            dictionary: Thing::from(("dictionary", Id::from(dictionary_id))),
                         },
                     )
                     .collect::<Vec<_>>(),
@@ -66,10 +63,7 @@ impl Database {
                 "name",
                 names
                     .iter()
-                    .map(|n| Thing {
-                        tb: "tag".to_owned(),
-                        id: n.into(),
-                    })
+                    .map(|n| Thing::from(("tag", Id::from(n))))
                     .collect::<Vec<_>>(),
             ))
             .await?

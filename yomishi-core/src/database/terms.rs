@@ -3,7 +3,10 @@ use crate::dict::parser::{tag::Tag, term::Term};
 use super::Database;
 
 use serde::{Deserialize, Serialize};
-use surrealdb::{sql::Thing, Result};
+use surrealdb::{
+    sql::{Id, Thing},
+    Result,
+};
 
 #[derive(Debug, Deserialize)]
 pub struct LookupData {
@@ -74,10 +77,7 @@ impl Database {
                              sequence,
                              term_tags,
                          }| InsertTerm {
-                            dictionary: Thing {
-                                tb: "dictionary".to_owned(),
-                                id: dictionary_id.into(),
-                            },
+                            dictionary: ("dictionary", dictionary_id).into(),
                             expression,
                             reading,
                             definition_tags: tags_to_things(definition_tags),
@@ -102,10 +102,7 @@ impl Database {
     ) -> Result<Vec<LookupData>> {
         let disabled_dicts = disabled_dicts
             .iter()
-            .map(|e| Thing {
-                tb: "dictionary".to_string(),
-                id: e.into(),
-            })
+            .map(|e| Thing::from(("dictionary", Id::from(e))))
             .collect::<Vec<_>>();
 
         self.conn
@@ -177,9 +174,6 @@ impl Database {
 fn tags_to_things(term_tags: &[String]) -> Vec<Thing> {
     term_tags
         .iter()
-        .map(|t| Thing {
-            tb: "tag".to_string(),
-            id: surrealdb::sql::Id::String(t.to_string()),
-        })
+        .map(|t| Thing::from(("tag", Id::from(t))))
         .collect()
 }

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use surrealdb::sql::Thing;
+use surrealdb::sql::{Id, Thing};
 
 use crate::dict::DictIndex;
 
@@ -55,13 +55,7 @@ impl Database {
         Ok(self
             .conn
             .query("SELECT title FROM $d")
-            .bind((
-                "d",
-                Thing {
-                    tb: "dictionary".to_owned(),
-                    id: id.into(),
-                },
-            ))
+            .bind(("d", Thing::from(("dictionary", Id::from(id)))))
             .await?
             .take::<Vec<DictName>>(0)?
             .remove(0)

@@ -1,7 +1,10 @@
 use std::vec;
 
 use serde::Serialize;
-use surrealdb::{sql::Thing, Result};
+use surrealdb::{
+    sql::{Id, Thing},
+    Result,
+};
 
 use crate::{dict::parser::term_meta::TermMeta, scan::search::DictionaryTagged};
 
@@ -33,10 +36,7 @@ impl Database {
                              reading,
                              entry,
                          }| InsertTermMeta {
-                            dictionary: Thing {
-                                tb: "dictionary".to_owned(),
-                                id: dictionary_id.into(),
-                            },
+                            dictionary: Thing::from(("dictionary", Id::from(dictionary_id))),
                             term,
                             reading: reading.as_deref(),
                             entry: serde_json::to_string(&entry).unwrap(),
